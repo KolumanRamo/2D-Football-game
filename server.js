@@ -1,34 +1,35 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const app = express();
-const PORT = 3000;
-const DB_FILE = path.join(__dirname, 'users.json');
-const JWT_SECRET = 'super-secret-arcade-key-123!';
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-arcade-key-123!';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '')));
 
-// Initialize DB file if it doesn't exist
-if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify({ users: [] }, null, 2));
-}
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
-// Helper functions for DB
-function readDB() {
-    const data = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(data);
-}
+// User Schema
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    coins: { type: Number, default: 0 },
+    unlockedTrails: { type: [String], default: ['default'] },
+    equippedTrail: { type: String, default: 'default' }
+});
 
-function writeDB(data) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-}
+const User = mongoose.model('User', userSchema);
 
 // --- AUTHENTICATION ENDPOINTS ---
 
@@ -40,39 +41,36 @@ app.post('/api/register', async (req, res) => {
         return res.status(400).json({ error: 'Kullanıcı adı ve şifre zorunludur.' });
     }
 
-    const db = readDB();
-
-    if (db.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
-        return res.status(400).json({ error: 'Bu kullanıcı adı zaten alınmış.' });
-    }
-
     try {
+        const existingUser = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Bu kullanıcı adı zaten alınmış.' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = {
-            id: Date.now().toString(),
+        const newUser = new User({
             username: username,
             password: hashedPassword,
             coins: 0,
             unlockedTrails: ['default'],
             equippedTrail: 'default'
-        };
+        });
 
-        db.users.push(newUser);
-        writeDB(db);
+        await newUser.save();
 
-        // Auto-login
-        const token = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
 
-        // Don't send password back
-        const { password: _, ...userWithoutPassword } = newUser;
+        const userObj = newUser.toObject();
+        delete userObj.password;
 
         res.status(201).json({
             message: 'Kayıt başarılı!',
             token,
-            user: userWithoutPassword
+            user: userObj
         });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Sunucu hatası oluştu.' });
     }
 });
@@ -85,28 +83,33 @@ app.post('/api/login', async (req, res) => {
         return res.status(400).json({ error: 'Küllanıcı adı ve şifre zorunludur.' });
     }
 
-    const db = readDB();
-    const user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    try {
+        const user = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
 
-    if (!user) {
-        return res.status(401).json({ error: 'Kullanıcı bulunamadı veya şifre hatalı.' });
+        if (!user) {
+            return res.status(401).json({ error: 'Kullanıcı bulunamadı veya şifre hatalı.' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Kullanıcı bulunamadı veya şifre hatalı.' });
+        }
+
+        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+        const userObj = user.toObject();
+        delete userObj.password;
+
+        res.json({
+            message: 'Giriş başarılı!',
+            token,
+            user: userObj
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-        return res.status(401).json({ error: 'Kullanıcı bulunamadı veya şifre hatalı.' });
-    }
-
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
-
-    const { password: _, ...userWithoutPassword } = user;
-
-    res.json({
-        message: 'Giriş başarılı!',
-        token,
-        user: userWithoutPassword
-    });
 });
 
 // Middleware to verify JWT token
@@ -116,48 +119,52 @@ function authenticateToken(req, res, next) {
 
     if (!token) return res.status(401).json({ error: 'Yetkisiz erişim.' });
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(403).json({ error: 'Geçersiz veya süresi dolmuş token.' });
-        req.user = user;
+        req.user = decoded;
         next();
     });
 }
 
 // --- METAGAME ENDPOINTS ---
 
-// Get current user data (for loading coins & trails on start)
-app.get('/api/me', authenticateToken, (req, res) => {
-    const db = readDB();
-    const user = db.users.find(u => u.id === req.user.userId);
-
-    if (!user) {
-        return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+// Get current user data
+app.get('/api/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
     }
-
-    const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
 });
 
-// Update data (save coins and trails after match or purchase)
-app.post('/api/update', authenticateToken, (req, res) => {
-    const db = readDB();
-    const userIndex = db.users.findIndex(u => u.id === req.user.userId);
+// Update data
+app.post('/api/update', authenticateToken, async (req, res) => {
+    try {
+        const { coins, unlockedTrails, equippedTrail } = req.body;
 
-    if (userIndex === -1) {
-        return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+        const updates = {};
+        if (coins !== undefined) updates.coins = coins;
+        if (unlockedTrails !== undefined) updates.unlockedTrails = unlockedTrails;
+        if (equippedTrail !== undefined) updates.equippedTrail = equippedTrail;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.userId,
+            { $set: updates },
+            { new: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+        }
+
+        res.json({ message: 'Başarıyla güncellendi.', user: updatedUser });
+    } catch (err) {
+        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
     }
-
-    const { coins, unlockedTrails, equippedTrail } = req.body;
-
-    // Apply updates if they exist in the payload
-    if (coins !== undefined) db.users[userIndex].coins = coins;
-    if (unlockedTrails !== undefined) db.users[userIndex].unlockedTrails = unlockedTrails;
-    if (equippedTrail !== undefined) db.users[userIndex].equippedTrail = equippedTrail;
-
-    writeDB(db);
-
-    const { password: _, ...updatedUser } = db.users[userIndex];
-    res.json({ message: 'Başarıyla güncellendi.', user: updatedUser });
 });
 
 // Catch-all route to serve the main HTML file
@@ -166,5 +173,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
