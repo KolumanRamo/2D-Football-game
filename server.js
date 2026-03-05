@@ -70,8 +70,8 @@ app.post('/api/register', async (req, res) => {
             user: userObj
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+        console.error("Register Error:", err);
+        res.status(500).json({ error: 'Sunucu hatası: ' + err.message });
     }
 });
 
@@ -107,8 +107,8 @@ app.post('/api/login', async (req, res) => {
             user: userObj
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+        console.error("Login Error:", err);
+        res.status(500).json({ error: 'Sunucu hatası: ' + err.message });
     }
 });
 
