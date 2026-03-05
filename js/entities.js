@@ -876,18 +876,8 @@ export class Ball extends Entity {
         ctx.restore();
 
         // ---- Motion blur trail ----
-        // Get color based on equipped trail
-        let trailColorStr = '#dde';
-        if (typeof State !== 'undefined' && State.equippedTrail) {
-            switch (State.equippedTrail) {
-                case 'neon_green': trailColorStr = '#2ecc71'; break;
-                case 'fire_orange': trailColorStr = '#e67e22'; break;
-                case 'electric_blue': trailColorStr = '#00d2d3'; break;
-                case 'gold': trailColorStr = '#f1c40f'; break;
-                case 'dark_matter': trailColorStr = '#8e44ad'; break;
-                default: trailColorStr = '#dde';
-            }
-        }
+        // Get color based on equipped trail or ball type
+        let trailColorStr = this.color;
 
         if (speed > 2) {
             ctx.save();
@@ -907,7 +897,7 @@ export class Ball extends Entity {
                 const stretch = 1 + speed * 0.08;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, r * stretch * 0.7, r * 0.7, 0, 0, Math.PI * 2);
-                ctx.fillStyle = this.type === 'normal' ? trailColorStr : this.color;
+                ctx.fillStyle = trailColorStr;
                 ctx.fill();
                 ctx.restore();
             }

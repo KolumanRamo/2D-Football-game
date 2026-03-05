@@ -1633,6 +1633,7 @@ function initAuthUI() {
                 State.unlockedTrails = data.user.unlockedTrails || ['default'];
                 State.equippedTrail = data.user.equippedTrail || 'default';
                 updateCoinDisplay();
+                applyEquippedTrail();
 
                 authScreen.classList.add('hidden');
                 startScreen.classList.remove('hidden');
@@ -1643,6 +1644,23 @@ function initAuthUI() {
             errMsg.innerText = "Sunucuya bağlanılamadı.";
         }
     }
+
+    function applyEquippedTrail() {
+        if (!State.equippedTrail) return;
+        let c = '#dde';
+        switch (State.equippedTrail) {
+            case 'neon_green': c = '#2ecc71'; break;
+            case 'fire_orange': c = '#e67e22'; break;
+            case 'electric_blue': c = '#00d2d3'; break;
+            case 'gold': c = '#f1c40f'; break;
+            case 'dark_matter': c = '#8e44ad'; break;
+            default: c = '#ffffff';
+        }
+        ball.color = c;
+    }
+
+    // Call it right away if auth existing
+    if (authToken) applyEquippedTrail();
 
     if (loginBtn) loginBtn.addEventListener('click', () => handleAuth(true));
     if (registerBtn) registerBtn.addEventListener('click', () => handleAuth(false));
@@ -1791,12 +1809,18 @@ function initShopUI() {
                         updateCoinDisplay();
 
                         // Apply immediately if active
-                        // ball.trailColor = item.color; // handled inside renderShopItems based on equippedTrail now
+                        let c = '#ffffff';
+                        SHOP_ITEMS.forEach(i => { if (i.id === id) c = i.color; });
+                        ball.color = c;
                     }
                 } else if (action === 'equip') {
                     State.equippedTrail = id;
                     saveMetagameData();
                     renderShopItems();
+
+                    let c = '#ffffff';
+                    SHOP_ITEMS.forEach(i => { if (i.id === id) c = i.color; });
+                    ball.color = c;
                 }
             });
         });
