@@ -1,0 +1,402 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Fredoka One', cursive, sans-serif;
+    user-select: none;
+}
+
+body {
+    background-color: #000;
+    /* Black bars background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+}
+
+.game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* Remove borders and fixed aspect ratio container, let canvas handle fit */
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    display: block;
+    background: #4CAF50;
+    /* Resolution is 1600x900, we scale it to fit screen */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Key to keeping aspect ratio without stretching */
+    cursor: none;
+}
+
+/* Scoreboard */
+.scoreboard {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 400px;
+    height: 72px;
+    background: rgba(10, 10, 20, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 36px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 32px;
+    gap: 24px;
+    color: white;
+    font-size: 32px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.red-team {
+    color: #ff6b72;
+    text-shadow: 0 0 20px rgba(255, 70, 80, 0.8), 2px 2px 0 rgba(0, 0, 0, 0.5);
+    font-size: 38px;
+    letter-spacing: 2px;
+}
+
+.blue-team {
+    color: #5dade2;
+    text-shadow: 0 0 20px rgba(52, 152, 255, 0.8), 2px 2px 0 rgba(0, 0, 0, 0.5);
+    font-size: 38px;
+    letter-spacing: 2px;
+}
+
+.timer-container {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+    min-width: 100px;
+    text-align: center;
+    color: #ecf0f1;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Overlays */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 100;
+    pointer-events: auto;
+}
+
+.hidden {
+    display: none !important;
+}
+
+h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #ff9ff3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 8px rgba(255, 100, 100, 0.4));
+}
+
+p {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #ecf0f1;
+}
+
+.controls {
+    font-size: 14px;
+    color: #bdc3c7;
+    margin-bottom: 15px;
+}
+
+button {
+    padding: 10px 30px;
+    font-size: 20px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #c0392b;
+    transition: transform 0.1s, box-shadow 0.1s;
+    font-family: 'Fredoka One', cursive;
+    /* Ensure font is applied to button */
+}
+
+button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #c0392b;
+}
+
+button:hover {
+    background: #ff6b81;
+}
+
+/* Setup Form */
+.setup-form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    max-width: 550px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.input-group label {
+    font-size: 14px;
+    margin-bottom: 2px;
+    color: #bdc3c7;
+}
+
+.input-group input {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px;
+    width: 140px;
+    text-align: center;
+    color: #2c3e50;
+}
+
+.input-group input:focus {
+    outline: 3px solid #f1c40f;
+}
+
+.input-group.full-width {
+    width: 100%;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.mode-select {
+    display: flex;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 10px;
+}
+
+.mode-select label {
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mode-select input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #f1c40f;
+    cursor: pointer;
+}
+
+.input-group input[type="color"] {
+    width: 60px;
+    height: 40px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+/* Sound Toggle */
+.sound-toggle {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sound-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #ecf0f1;
+}
+
+.sound-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.sound-toggle span {
+    user-select: none;
+}
+
+/* Goal Notification */
+.goal-notification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    text-align: center;
+    pointer-events: none;
+    animation: goalPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.goal-notification span {
+    font-size: 86px;
+    background: linear-gradient(135deg, #ffd700, #ff9500, #ffec00, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(255, 200, 0, 0.8)) drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.5));
+    display: block;
+    white-space: nowrap;
+    letter-spacing: 4px;
+}
+
+@keyframes goalPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0.2) rotate(-15deg);
+        opacity: 0;
+        filter: blur(10px);
+    }
+
+    40% {
+        opacity: 1;
+        filter: blur(0px);
+    }
+
+    65% {
+        transform: translate(-50%, -50%) scale(1.25) rotate(3deg);
+    }
+
+    80% {
+        transform: translate(-50%, -50%) scale(0.98) rotate(-1deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Chaos Notification */
+#chaosNotification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 100;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 20px 40px;
+    border-radius: 15px;
+    border: 3px solid #ff4757;
+    box-shadow: 0 0 30px #ff4757;
+    animation: chaosPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#chaosTitle {
+    font-size: 48px;
+    color: #ff4757;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 0 #fff;
+}
+
+#chaosList div {
+    font-size: 32px;
+    color: #fff;
+    margin: 5px 0;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes chaosPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+}
+
+.hidden {
+    display: none !important;
+}
+
+#startBtn {
+    pointer-events: auto;
+    position: relative;
+    z-index: 200;
+}
+
+/* Lobby Styles */
+#lobbyMenu button {
+    font-size: 1rem;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+}
+
+#lobbyMenu button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+}
+
+.player-list-item {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.1);
+    padding: 8px;
+    border-radius: 3px;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}

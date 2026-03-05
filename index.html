@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Arcade Futbol</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <!-- PeerJS for Online Multiplayer -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            alert("HATA: " + msg + "\nSatır: " + line + "\nSütun: " + col);
+            return false;
+        };
+    </script>
+</head>
+
+<body>
+
+    <div class="game-container">
+        <!-- Scoreboard -->
+        <div id="scoreboard" class="scoreboard">
+            <div class="team red-team">
+                <span id="scoreRed">0</span>
+            </div>
+            <div class="timer-container">
+                <span id="timer">02:00</span>
+            </div>
+            <div class="team blue-team">
+                <span id="scoreBlue">0</span>
+            </div>
+        </div>
+
+        <!-- Goal Notification -->
+        <div id="goalNotification" class="goal-notification hidden">
+            <span id="goalText" data-i18n="goal_text">GOOOL!</span>
+        </div>
+        <!-- Chaos Notification -->
+        <div id="chaosNotification" class="hidden">
+            <div id="chaosTitle" data-i18n="chaos_title">🌀 KAOS! 🌀</div>
+            <div id="chaosList"></div>
+        </div>
+
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas" width="1600" height="900"></canvas>
+
+        <!-- Quick Chat Overlay -->
+        <div id="quickChatUI" class="hidden"
+            style="position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; color: white; font-family: 'Fredoka One', sans-serif; pointer-events: none;">
+            <div style="font-size: 12px; color: #f1c40f; margin-bottom: 5px;">Hızlı Mesaj (1-4 Tuşları)</div>
+            <div>[1] Harika Pas!</div>
+            <div>[2] İyi Oyundu! (GG)</div>
+            <div>[3] Kusura Bakma!</div>
+            <div>[4] Şanslıydın!</div>
+        </div>
+
+        <!-- Authentication Screen Overlay -->
+        <div id="authScreen" class="overlay" style="z-index: 1000; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+            <h1 style="font-size: 48px; margin-bottom: 20px;">⚽ Arcade Futbol</h1>
+            <p style="color: #ecf0f1; margin-bottom: 30px; font-size: 18px;">Lütfen oynamak için giriş yapın veya kayıt olun.</p>
+            
+            <div style="background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px; border: 2px solid #3498db; width: 350px; text-align: center;">
+                <input type="text" id="authUsername" placeholder="Kullanıcı Adı" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: none; font-size: 16px; font-family: 'Fredoka One', cursive;">
+                <input type="password" id="authPassword" placeholder="Şifre" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 5px; border: none; font-size: 16px; font-family: 'Fredoka One', cursive;">
+                
+                <div id="authErrorMsg" style="color: #e74c3c; margin-bottom: 15px; font-size: 14px; min-height: 20px;"></div>
+                
+                <button id="loginBtn" style="width: 100%; padding: 12px; font-size: 18px; margin-bottom: 10px; background: #3498db; box-shadow: 0 4px 0 #2980b9;">GİRİŞ YAP</button>
+                <button id="registerBtn" style="width: 100%; padding: 12px; font-size: 18px; background: #2ecc71; box-shadow: 0 4px 0 #27ae60;">KAYIT OL</button>
+                
+                <button id="playOfflineBtn" style="width: 100%; padding: 10px; font-size: 14px; margin-top: 15px; background: #7f8c8d; box-shadow: 0 4px 0 #34495e;">ÇEVRİMDIŞI OYNA (KAYITSIZ)</button>
+            </div>
+        </div>
+
+        <!-- Start Screen Overlay -->
+        <div id="startScreen" class="overlay hidden">
+            <div class="language-select" style="position: absolute; top: 10px; right: 10px;">
+                <select id="languageSelect" style="padding: 5px; font-weight: bold;">
+                    <option value="tr">🇹🇷 Türkçe</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="sv">🇸🇪 Svenska</option>
+                    <option value="ru">🇷🇺 Русский</option>
+                </select>
+            </div>
+
+            <h1 data-i18n="game_title">2D Arcade Futbol</h1>
+            <p data-i18n="start_instruction">Oynamak için Başla'ya bas!</p>
+            <p class="controls" data-i18n="controls_hint">Kırmızı: WASD | Mavi: OK TUŞLARI</p>
+
+            <!-- Coin & Shop Header -->
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px;">
+                <div
+                    style="background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; border: 1px solid #f1c40f; color: #f1c40f; font-weight: bold; font-size: 1.2rem;">
+                    🪙 <span id="coinBalanceDisplay">0</span> Jeton
+                </div>
+                <button id="openShopBtn" style="background: #e67e22; padding: 5px 15px; font-size: 1rem;">🛒
+                    MAĞAZA</button>
+            </div>
+
+            <div class="setup-form">
+                <div class="input-group">
+                    <label data-i18n="team_red">Kırmızı Takım:</label>
+                    <input type="text" id="p1NameInput" value="Kırmızı" maxlength="10">
+                </div>
+                <div class="input-group">
+                    <label data-i18n="team_blue">Mavi Takım:</label>
+                    <input type="text" id="p2NameInput" value="Mavi" maxlength="10">
+                </div>
+                <div class="input-group">
+                    <label data-i18n="duration_label">Süre (Dk):</label>
+                    <input type="number" id="durationInput" value="2" min="1" max="10">
+                </div>
+                <div class="input-group">
+                    <label data-i18n="goal_limit_label">Hedef Skor:</label>
+                    <input type="number" id="goalLimitInput" value="5" min="1" max="20">
+                </div>
+
+                <div class="input-group full-width">
+                    <label data-i18n="game_mode_label">Oyun Modu:</label>
+                    <div class="mode-select">
+                        <label>
+                            <input type="radio" name="gameMode" value="2p" checked> <span data-i18n="mode_2p">2
+                                Oyuncu</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="gameMode" value="1p"> <span data-i18n="mode_1p">1 Oyuncu (vs
+                                Robo-Messi)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="input-group full-width">
+                    <label data-i18n="weather_label">Hava Durumu:</label>
+                    <div class="mode-select">
+                        <label>
+                            <input type="radio" name="weatherType" value="sunny" checked> <span
+                                data-i18n="weather_sunny">Güneşli ☀️</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="weatherType" value="rainy"> <span
+                                data-i18n="weather_rainy">Yağmurlu
+                                🌧️</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="weatherType" value="snowy"> <span data-i18n="weather_snowy">Karlı
+                                ❄️</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="weatherType" value="icy"> <span data-i18n="weather_icy">Buzlu
+                                🧊</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="input-group full-width">
+                    <label data-i18n="ball_choice_label">Top Seçimi:</label>
+                    <div class="mode-select">
+                        <label title="Standart Futbol Topu">
+                            <input type="radio" name="ballType" value="normal" checked> <span
+                                data-i18n="ball_normal">Normal ⚽</span>
+                        </label>
+                        <label title="Ağır, az seker, çok kaymaz">
+                            <input type="radio" name="ballType" value="bowling"> <span data-i18n="ball_bowling">Bowling
+                                🎳</span>
+                        </label>
+                        <label title="Hafif, çok seker, havada süzülür">
+                            <input type="radio" name="ballType" value="beach"> <span data-i18n="ball_beach">Plaj
+                                🏖️</span>
+                        </label>
+                        <label title="Küçük, hızlı, seker">
+                            <input type="radio" name="ballType" value="pingpong"> <span data-i18n="ball_pingpong">Pinpon
+                                🏓</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sound-toggle" style="display: flex; gap: 20px; justify-content: center;">
+                <label>
+                    <input type="checkbox" id="soundToggle" checked> <span data-i18n="sound_effects">Ses Efektleri
+                        🔊</span>
+                </label>
+            </div>
+
+            <div class="sound-toggle"
+                style="margin-top: 10px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <label style="color: #ff4757; font-weight: bold; text-shadow: 0 0 5px #ff4757;">
+                    <input type="checkbox" id="chaosMode"> <span data-i18n="chaos_mode">🌀 KAOS MODU</span>
+                </label>
+                <label style="color: #e67e22; font-weight: bold; text-shadow: 0 0 5px #e67e22;">
+                    <input type="checkbox" id="hotPotatoMode"> <span data-i18n="bomb_mode">💣 BOMBA MODU</span>
+                </label>
+                <label style="color: #f1c40f; font-weight: bold; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">
+                    <input type="checkbox" id="nightModeToggle"> <span data-i18n="night_mode">🌙 GECE MODU (PRO)</span>
+                </label>
+            </div>
+
+            <button id="onlineBtn" style="background: #8e44ad; margin-bottom: 10px;">🌐 ONLINE OYNA</button>
+            <button id="startBtn" data-i18n="start_btn">MAÇA BAŞLA</button>
+        </div>
+
+        <!-- Online Multiplayer Menu -->
+        <div id="onlineMenu" class="overlay hidden">
+            <h1 style="color: #8e44ad;">🌐 ONLINE 1v1</h1>
+            <div id="onlineStatus" style="margin-bottom: 20px; font-weight: bold; color: #f1c40f;">Bağlanıyor...</div>
+
+            <div id="hostSection" style="margin-bottom: 20px;">
+                <button id="hostBtn">ODA OLUŞTUR (P1)</button>
+                <div id="myIdDisplay" class="hidden"
+                    style="margin-top: 10px; font-size: 14px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+                    Oda Kodun: <span id="myPeerId"
+                        style="color: #2ecc71; cursor: pointer; text-decoration: underline;">...</span>
+                    <br><small>(Kopyalamak için tıkla)</small>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0; width: 80%;"></div>
+
+            <div id="joinSection">
+                <input type="text" id="joinIdInput" placeholder="Oda Kodunu Gir (P2)"
+                    style="width: 250px; padding: 10px; border-radius: 5px; border: none; background: #34495e; color: white;">
+                <button id="joinBtn" style="background: #27ae60; margin-top: 10px;">ODAYA KATIL</button>
+            </div>
+
+            <button id="backToMainBtn" class="secondary-btn" style="margin-top: 20px;">GERİ DÖ</button>
+        </div>
+
+        <!-- Lobby Menu Overlay -->
+        <div id="lobbyMenu" class="overlay hidden"
+            style="background: #1e272e; width: 90%; max-width: 900px; padding: 0; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
+            <!-- Top Bar -->
+            <div class="lobby-header"
+                style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 10px 20px; border-radius: 10px 10px 0 0; border-bottom: 2px solid #e74c3c;">
+                <div id="lobbyRoomName" style="font-size: 1.2rem; font-weight: bold; color: white;">Oda</div>
+                <div class="lobby-header-actions" style="display: flex; gap: 10px;">
+                    <button id="lobbyReadyBtn"
+                        style="padding: 5px 15px; font-size: 0.9rem; background: #f39c12; font-weight: bold;">✅ Hazır
+                        Değil</button>
+                    <button id="lobbyCopyIdBtn" style="padding: 5px 15px; font-size: 0.9rem; background: #2980b9;">🔗
+                        Link / ID</button>
+                    <button id="lobbyLeaveBtn" style="padding: 5px 15px; font-size: 0.9rem; background: #c0392b;">🚪
+                        Çık</button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lobby-content" style="display: flex; gap: 20px; padding: 20px; flex-wrap: wrap;">
+                <!-- Teams Panel -->
+                <div class="lobby-teams" style="flex: 2; display: flex; gap: 10px; min-width: 400px;">
+                    <div class="team-column" style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                        <button id="joinRedBtn" style="background: #e74c3c; padding: 5px; border-radius: 5px;">Kırmızı
+                            Ol</button>
+                        <div id="lobbyRedList" class="player-list"
+                            style="flex: 1; background: #111; border-radius: 5px; padding: 10px; min-height: 250px; color: white; display: flex; flex-direction: column; gap: 5px;">
+                            <!-- Red players -->
+                        </div>
+                    </div>
+                    <div class="team-column" style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                        <button id="joinSpecBtn"
+                            style="background: #34495e; padding: 5px; border-radius: 5px;">İzleyici</button>
+                        <div id="lobbySpecList" class="player-list"
+                            style="flex: 1; background: #111; border-radius: 5px; padding: 10px; min-height: 250px; color: white; display: flex; flex-direction: column; gap: 5px;">
+                            <!-- Spectators -->
+                        </div>
+                    </div>
+                    <div class="team-column" style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                        <button id="joinBlueBtn" style="background: #3498db; padding: 5px; border-radius: 5px;">Mavi
+                            Ol</button>
+                        <div id="lobbyBlueList" class="player-list"
+                            style="flex: 1; background: #111; border-radius: 5px; padding: 10px; min-height: 250px; color: white; display: flex; flex-direction: column; gap: 5px;">
+                            <!-- Blue players -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings & Start -->
+                <div class="lobby-sidebar"
+                    style="flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 200px;">
+                    <div class="lobby-settings"
+                        style="background: #2c3e50; padding: 15px; border-radius: 5px; display: flex; flex-direction: column; gap: 10px;">
+                        <div class="input-group" style="margin: 0; text-align: left;">
+                            <label style="font-size: 0.9rem; color: #ecf0f1;">Süre (Dk):</label>
+                            <input type="number" id="lobbyDuration" value="2" min="1" max="10"
+                                style="width: 100%; padding: 5px; background: #34495e; color: white; border: none; border-radius: 3px;">
+                        </div>
+                        <div class="input-group" style="margin: 0; text-align: left;">
+                            <label style="font-size: 0.9rem; color: #ecf0f1;">Hedef Skor:</label>
+                            <input type="number" id="lobbyGoalLimit" value="5" min="1" max="20"
+                                style="width: 100%; padding: 5px; background: #34495e; color: white; border: none; border-radius: 3px;">
+                        </div>
+                        <div class="input-group" style="margin: 0; text-align: left;">
+                            <label style="font-size: 0.9rem; color: #ecf0f1;">Hava Durumu:</label>
+                            <select id="lobbyWeather"
+                                style="width: 100%; padding: 5px; font-weight: bold; background: #34495e; color: white; border: none; border-radius: 3px;">
+                                <option value="sunny">Güneşli ☀️</option>
+                                <option value="rainy">Yağmurlu 🌧️</option>
+                                <option value="snowy">Karlı ❄️</option>
+                                <option value="icy">Buzlu 🧊</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin: 0; text-align: left;">
+                            <label style="font-size: 0.9rem; color: #ecf0f1;">Top Seçimi:</label>
+                            <select id="lobbyBallType"
+                                style="width: 100%; padding: 5px; font-weight: bold; background: #34495e; color: white; border: none; border-radius: 3px;">
+                                <option value="normal">Normal ⚽</option>
+                                <option value="bowling">Bowling 🎳</option>
+                                <option value="beach">Plaj 🏖️</option>
+                                <option value="pingpong">Pinpon 🏓</option>
+                            </select>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #aaa; text-align: center; margin-top: 5px;">Sadece Kurucu
+                            değiştirebilir</div>
+                    </div>
+                    <button id="lobbyStartBtn"
+                        style="background: #2ecc71; padding: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; border-radius: 5px; cursor: pointer;">▶
+                        MAÇA BAŞLA</button>
+                    <div id="lobbyWaitMsg"
+                        style="text-align: center; color: #f1c40f; font-weight: bold; display: none;">Kurucunun
+                        başlatması bekleniyor...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div id="gameOverScreen" class="overlay hidden">
+            <h1 id="winnerText" data-i18n="winner_text">KAZANAN: KIRMIZI</h1>
+            <button id="restartBtn" data-i18n="restart_btn">TEKRAR OYNA</button>
+        </div>
+        <!-- Pause Menu Overlay -->
+        <div id="pauseMenu" class="overlay hidden">
+            <h1 data-i18n="pause_title">DURAKLATILDI</h1>
+            <div class="settings-group">
+                <label for="volumeSlider" data-i18n="volume_label">Ses Seviyesi</label>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5">
+            </div>
+            <button id="resumeBtn" data-i18n="resume_btn">DEVAM ET</button>
+            <button id="mainMenuBtn" class="secondary-btn" data-i18n="main_menu_btn">ANA MENÜ</button>
+        </div>
+
+        <!-- Post Match Stats Screen -->
+        <div id="postMatchScreen" class="overlay hidden"
+            style="background: rgba(0,0,0,0.9); width: 80%; max-width: 600px; border-radius: 15px; border: 2px solid #f1c40f; box-shadow: 0 0 30px rgba(241,196,15,0.4);">
+            <h1 id="pmWinnerText" style="font-size: 2.5rem; margin-bottom: 20px; text-shadow: 0 0 10px currentColor;">
+                MAÇ SONUCU</h1>
+
+            <div id="pmScoreDisplay"
+                style="font-size: 3rem; font-family: 'Fredoka One', cursive; margin-bottom: 30px; display: flex; justify-content: center; gap: 30px;">
+                <span id="pmRedScore" style="color: #ff4757;">0</span>
+                <span style="color: white;">-</span>
+                <span id="pmBlueScore" style="color: #2e86de;">0</span>
+            </div>
+
+            <table
+                style="width: 100%; color: white; font-size: 1.2rem; border-collapse: collapse; margin-bottom: 30px;">
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <th style="padding: 10px; color: #ff4757; text-align: left;" id="pmRedName">Kırmızı</th>
+                    <th style="padding: 10px; text-align: center; color: #aaa;">İstatistik</th>
+                    <th style="padding: 10px; color: #2e86de; text-align: right;" id="pmBlueName">Mavi</th>
+                </tr>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                    <td id="pmRedPossession" style="padding: 10px; text-align: left;">%50</td>
+                    <td style="padding: 10px; text-align: center;">Topla Oynama</td>
+                    <td id="pmBluePossession" style="padding: 10px; text-align: right;">%50</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                    <td id="pmRedShots" style="padding: 10px; text-align: left;">0</td>
+                    <td style="padding: 10px; text-align: center;">İsabetli Şut</td>
+                    <td id="pmBlueShots" style="padding: 10px; text-align: right;">0</td>
+                </tr>
+                <tr>
+                    <td id="pmRedSaves" style="padding: 10px; text-align: left;">0</td>
+                    <td style="padding: 10px; text-align: center;">Kurtarış</td>
+                    <td id="pmBlueSaves" style="padding: 10px; text-align: right;">0</td>
+                </tr>
+            </table>
+
+            <div id="pmCoinReward" style="font-size: 1.5rem; color: #f1c40f; margin-bottom: 20px; display: none;">
+                🪙 +<span id="pmCoinAmount">0</span> Jeton Kazanıldı!
+            </div>
+
+            <button id="pmContinueBtn" style="background: #2ecc71; width: 100%;">DEVAM ET</button>
+        </div>
+
+        <!-- Shop Screen Overlay -->
+        <div id="shopScreen" class="overlay hidden"
+            style="background: rgba(0,0,0,0.95); width: 90%; max-width: 800px; border-radius: 15px; border: 2px solid #e67e22;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e67e22; padding-bottom: 10px; margin-bottom: 20px;">
+                <h1 style="color: #e67e22; margin: 0;">🛒 MAĞAZA</h1>
+                <div style="color: #f1c40f; font-weight: bold; font-size: 1.5rem;">🪙 <span
+                        id="shopCoinDisplay">0</span></div>
+            </div>
+
+            <h2 style="color: white; text-align: left; margin-bottom: 10px;">Şut İzi Renkleri</h2>
+            <div id="shopItemsContainer"
+                style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+                <!-- Items populated via JS -->
+            </div>
+
+            <button id="closeShopBtn" class="secondary-btn" style="width: 100%; margin-top: 20px;">KAPAT</button>
+        </div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

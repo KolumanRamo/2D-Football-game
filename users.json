@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "id": "1772749739491",
+      "username": "KolumanRamo",
+      "password": "$2b$10$EM3DNjEjlpyE1yZ0J.RXEeKjIDeMXbpL8dVKecJxXapdOVKgh35ae",
+      "coins": 76,
+      "unlockedTrails": [
+        "default"
+      ],
+      "equippedTrail": "default"
+    }
+  ]
+}
