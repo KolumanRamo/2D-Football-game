@@ -1787,12 +1787,11 @@ function initShopUI() {
                         State.unlockedTrails.push(id);
                         State.equippedTrail = id;
                         saveMetagameData();
-                        SoundManager.playCoin();
                         renderShopItems();
                         updateCoinDisplay();
 
                         // Apply immediately if active
-                        ball.trailColor = item.color; // We need to handle this in entities.js
+                        // ball.trailColor = item.color; // handled inside renderShopItems based on equippedTrail now
                     }
                 } else if (action === 'equip') {
                     State.equippedTrail = id;
