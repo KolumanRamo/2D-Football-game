@@ -167,6 +167,21 @@ app.post('/api/update', authenticateToken, async (req, res) => {
     }
 });
 
+// --- ADMIN ENDPOINTS (TEMPORARY) ---
+app.get('/api/admin/givecoins/:username', async (req, res) => {
+    try {
+        const user = await User.findOne({ username: { $regex: new RegExp(`^${req.params.username}$`, 'i') } });
+        if (!user) {
+            return res.status(404).send('Kullanıcı bulunamadı: ' + req.params.username);
+        }
+        user.coins += 999999;
+        await user.save();
+        res.send(`<h1>Tebrikler Kurucu Bey!</h1><p><b>${user.username}</b> hesabına <b>999.999 jeton</b> başarıyla yüklendi.</p><p>Oyuna dönüp sayfayı yenileyebilirsiniz.</p>`);
+    } catch (err) {
+        res.status(500).send('Hata oluştu: ' + err.message);
+    }
+});
+
 // Catch-all route to serve the main HTML file
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
