@@ -57,20 +57,32 @@
         </div>
 
         <!-- Authentication Screen Overlay -->
-        <div id="authScreen" class="overlay" style="z-index: 1000; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+        <div id="authScreen" class="overlay"
+            style="z-index: 1000; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
             <h1 style="font-size: 48px; margin-bottom: 20px;">⚽ Arcade Futbol</h1>
-            <p style="color: #ecf0f1; margin-bottom: 30px; font-size: 18px;">Lütfen oynamak için giriş yapın veya kayıt olun.</p>
-            
-            <div style="background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px; border: 2px solid #3498db; width: 350px; text-align: center;">
-                <input type="text" id="authUsername" placeholder="Kullanıcı Adı" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: none; font-size: 16px; font-family: 'Fredoka One', cursive;">
-                <input type="password" id="authPassword" placeholder="Şifre" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 5px; border: none; font-size: 16px; font-family: 'Fredoka One', cursive;">
-                
-                <div id="authErrorMsg" style="color: #e74c3c; margin-bottom: 15px; font-size: 14px; min-height: 20px;"></div>
-                
-                <button id="loginBtn" style="width: 100%; padding: 12px; font-size: 18px; margin-bottom: 10px; background: #3498db; box-shadow: 0 4px 0 #2980b9;">GİRİŞ YAP</button>
-                <button id="registerBtn" style="width: 100%; padding: 12px; font-size: 18px; background: #2ecc71; box-shadow: 0 4px 0 #27ae60;">KAYIT OL</button>
-                
-                <button id="playOfflineBtn" style="width: 100%; padding: 10px; font-size: 14px; margin-top: 15px; background: #7f8c8d; box-shadow: 0 4px 0 #34495e;">ÇEVRİMDIŞI OYNA (KAYITSIZ)</button>
+            <p style="color: #ecf0f1; margin-bottom: 30px; font-size: 18px;">Lütfen oynamak için giriş yapın veya kayıt
+                olun.</p>
+
+            <div
+                style="background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px; border: 2px solid #3498db; width: 350px; text-align: center;">
+                <input type="text" id="authUsername" placeholder="Kullanıcı Adı"
+                    style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: none; font-size: 16px; font-family: 'Fredoka One', cursive;">
+                <input type="password" id="authPassword" placeholder="Şifre"
+                    style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 5px; border: none; font-size: 16px; font-family: 'Fredoka One', cursive;">
+
+                <div id="authErrorMsg" style="color: #e74c3c; margin-bottom: 15px; font-size: 14px; min-height: 20px;">
+                </div>
+
+                <button id="loginBtn"
+                    style="width: 100%; padding: 12px; font-size: 18px; margin-bottom: 10px; background: #3498db; box-shadow: 0 4px 0 #2980b9;">GİRİŞ
+                    YAP</button>
+                <button id="registerBtn"
+                    style="width: 100%; padding: 12px; font-size: 18px; background: #2ecc71; box-shadow: 0 4px 0 #27ae60;">KAYIT
+                    OL</button>
+
+                <button id="playOfflineBtn"
+                    style="width: 100%; padding: 10px; font-size: 14px; margin-top: 15px; background: #7f8c8d; box-shadow: 0 4px 0 #34495e;">ÇEVRİMDIŞI
+                    OYNA (KAYITSIZ)</button>
             </div>
         </div>
 
@@ -199,7 +211,10 @@
                 </label>
             </div>
 
-            <button id="onlineBtn" style="background: #8e44ad; margin-bottom: 10px;">🌐 ONLINE OYNA</button>
+            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
+                <button id="lobbiesBtn" style="background: #8e44ad; flex:1; max-width:200px;">🏟️ LOBİLER</button>
+                <button id="onlineBtn" style="background: #2980b9; flex:1; max-width:200px;">🔗 KOD İLE BAĞ</button>
+            </div>
             <button id="startBtn" data-i18n="start_btn">MAÇA BAŞLA</button>
         </div>
 
@@ -313,7 +328,15 @@
                             </select>
                         </div>
                         <div style="font-size: 0.8rem; color: #aaa; text-align: center; margin-top: 5px;">Sadece Kurucu
-                            değiştirebilir</div>
+                                                    <div class="input-group" style="margin: 0; text-align: left;">
+                            <label style="font-size: 0.9rem; color: #ecf0f1;">Oyun Modu:</label>
+                            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+                                <label style="color:#ff4757;font-size:0.85rem;"><input type="checkbox" id="lobbyChaosMode"> 🌀 Kaos Modu</label>
+                                <label style="color:#e67e22;font-size:0.85rem;"><input type="checkbox" id="lobbyBombMode"> 💣 Bomba Modu</label>
+                                <label style="color:#f1c40f;font-size:0.85rem;"><input type="checkbox" id="lobbySuddenDeath"> 👑 Altın Gol</label>
+                            </div>
+                        </div>
+                        değiştirebilir</div>
                     </div>
                     <button id="lobbyStartBtn"
                         style="background: #2ecc71; padding: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; border-radius: 5px; cursor: pointer;">▶
@@ -395,13 +418,45 @@
                         id="shopCoinDisplay">0</span></div>
             </div>
 
-            <h2 style="color: white; text-align: left; margin-bottom: 10px;">Şut İzi Renkleri</h2>
             <div id="shopItemsContainer"
                 style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
                 <!-- Items populated via JS -->
             </div>
 
             <button id="closeShopBtn" class="secondary-btn" style="width: 100%; margin-top: 20px;">KAPAT</button>
+        </div>
+    
+        <!-- Lobbies Screen Overlay -->
+        <div id="lobbiesScreen" class="overlay hidden" style="background: linear-gradient(135deg,#1a1a2e,#16213e);width:95%;max-width:900px;border-radius:16px;border:2px solid #8e44ad;padding:30px;overflow-y:auto;max-height:90vh;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <h1 style="color:#8e44ad;margin:0;font-size:2rem;">🏟️ LOBİLER</h1>
+                <div style="display:flex;gap:10px;">
+                    <button id="createLobbyBtn" style="background:#8e44ad;padding:8px 18px;">✚ Lobi Aç</button>
+                    <button id="refreshLobbiesBtn" style="background:#2980b9;padding:8px 14px;">🔄</button>
+                    <button id="closeLobbyBrowserBtn" class="secondary-btn" style="padding:8px 14px;">✕</button>
+                </div>
+            </div>
+            <div id="lobbyListContainer" style="min-height:200px;">
+                <div style="color:#aaa;text-align:center;padding:40px;">Lobiler yükleniyor...</div>
+            </div>
+        </div>
+
+        <!-- Lobby Create Modal -->
+        <div id="lobbyCreateModal" class="overlay hidden" style="background:rgba(0,0,0,0.85);width:90%;max-width:480px;border-radius:14px;border:2px solid #8e44ad;padding:30px;">
+            <h2 style="color:#8e44ad;margin-bottom:20px;">🏟️ Lobi Oluştur</h2>
+            <label style="display:block;margin-bottom:8px;color:#ccc;">Lobi Adı:</label>
+            <input type="text" id="lobbyNameInput" placeholder="Örn: Ramo'nun Maçı" maxlength="30"
+                style="width:100%;padding:10px;border-radius:8px;border:none;background:#2c3e50;color:white;font-size:1rem;margin-bottom:18px;box-sizing:border-box;">
+            <label style="display:block;margin-bottom:10px;color:#ccc;">Gizlilik:</label>
+            <div style="display:flex;gap:12px;margin-bottom:24px;">
+                <button id="lobbyPublicBtn" class="lobby-privacy-btn active" data-val="public" style="flex:1;background:#27ae60;border-radius:8px;padding:10px;font-size:1rem;border:2px solid #27ae60;">🌐 Herkese Açık</button>
+                <button id="lobbyPrivateBtn" class="lobby-privacy-btn" data-val="private" style="flex:1;background:#2c3e50;border-radius:8px;padding:10px;font-size:1rem;border:2px solid #666;">🔒 Gizli</button>
+            </div>
+            <div id="lobbyCreateError" style="color:#e74c3c;min-height:20px;margin-bottom:10px;"></div>
+            <div style="display:flex;gap:10px;">
+                <button id="lobbyCreateConfirmBtn" style="flex:1;background:#8e44ad;">OLUŞTUR</button>
+                <button id="lobbyCreateCancelBtn" class="secondary-btn" style="flex:1;">İPTAL</button>
+            </div>
         </div>
     </div>
     <script type="module" src="js/main.js"></script>

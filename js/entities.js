@@ -447,13 +447,34 @@ export class Player extends Entity {
         const bobbing = isMoving ? Math.abs(Math.sin(this.animTimer * 1.2)) * 2 : 0;
 
         const isBlue = (this.color === '#3498db');
-        const jerseyColor = isBlue ? '#1a6fc4' : '#c0392b';
-        const jerseyHighlight = isBlue ? '#3498db' : '#e74c3c';
+
+        // Jersey skin system: player1 (red) gets the equipped skin, player2 stays default blue
+        let jerseyColor, jerseyHighlight, sockColor, shortColor;
+        if (!isBlue && typeof State !== 'undefined') {
+            const jerseyMap = {
+                'classic_jersey': { base: '#c0392b', hi: '#e74c3c', sock: '#922b21', short: '#641e16' },
+                'galaxy': { base: '#6c3483', hi: '#9b59b6', sock: '#7d3c98', short: '#4a235a' },
+                'emerald': { base: '#1e8449', hi: '#27ae60', sock: '#196f3d', short: '#0e5c33' },
+                'electric': { base: '#0a7a9a', hi: '#0abde3', sock: '#0e6e8a', short: '#095f77' },
+                'sunset': { base: '#c0392b', hi: '#f39c12', sock: '#a04000', short: '#784212' },
+                'gold_king': { base: '#b7950b', hi: '#f1c40f', sock: '#9a7d0a', short: '#7d6608' },
+                'dark_knight': { base: '#1c2833', hi: '#5d6d7e', sock: '#1a252f', short: '#17202a' },
+            };
+            const skin = jerseyMap[State.equippedJersey] || jerseyMap['classic_jersey'];
+            jerseyColor = skin.base;
+            jerseyHighlight = skin.hi;
+            sockColor = skin.sock;
+            shortColor = skin.short;
+        } else {
+            jerseyColor = isBlue ? '#1a6fc4' : '#c0392b';
+            jerseyHighlight = isBlue ? '#3498db' : '#e74c3c';
+            sockColor = isBlue ? '#2980b9' : '#922b21';
+            shortColor = isBlue ? '#154360' : '#641e16';
+        }
+
         const skinColor = '#f5c5a3';
         const hairColor = isBlue ? '#2c2c54' : '#2c2c2c';
         const shoeColor = '#1a1a1a';
-        const sockColor = isBlue ? '#2980b9' : '#922b21';
-        const shortColor = isBlue ? '#154360' : '#641e16';
         const numStr = isBlue ? '10' : '7';
 
         // ---- Layered soft shadow underneath ----
@@ -875,9 +896,21 @@ export class Ball extends Entity {
         ctx.fill();
         ctx.restore();
 
+        // ---- Ball Skin System ----
+        const BALL_SKINS = {
+            'classic_ball': { color: '#ffffff', glow: null, name: 'Klasik' },
+            'neon_ball': { color: '#2ecc71', glow: 'rgba(46,204,113,0.5)', name: 'Neon' },
+            'fire_ball': { color: '#e67e22', glow: 'rgba(230,126,34,0.55)', name: 'Alev Ateşi' },
+            'electric_ball': { color: '#00d2d3', glow: 'rgba(0,210,211,0.5)', name: 'Elektrik' },
+            'gold_ball': { color: '#f1c40f', glow: 'rgba(241,196,15,0.55)', name: 'Saf Altın' },
+            'dark_ball': { color: '#8e44ad', glow: 'rgba(142,68,173,0.6)', name: 'Karanlık' },
+        };
+        const activeSkin = (typeof State !== 'undefined' && BALL_SKINS[State.equippedBallSkin])
+            ? BALL_SKINS[State.equippedBallSkin]
+            : BALL_SKINS['classic_ball'];
+
         // ---- Motion blur trail ----
-        // Get color based on equipped trail or ball type
-        let trailColorStr = this.color;
+        const trailColor = activeSkin.color;
 
         if (speed > 2) {
             ctx.save();
@@ -890,14 +923,13 @@ export class Ball extends Entity {
                 const r = this.radius * (0.4 + ratio * 0.6);
 
                 ctx.globalAlpha = alpha;
-                // Draw stretched ellipse in direction of movement for motion-blur feel
                 ctx.save();
                 ctx.translate(pt.x, pt.y);
                 ctx.rotate(vAngle);
                 const stretch = 1 + speed * 0.08;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, r * stretch * 0.7, r * 0.7, 0, 0, Math.PI * 2);
-                ctx.fillStyle = trailColorStr;
+                ctx.fillStyle = this.type === 'normal' ? trailColor : this.color;
                 ctx.fill();
                 ctx.restore();
             }
@@ -909,27 +941,37 @@ export class Ball extends Entity {
         ctx.rotate(this.angle);
 
         if (this.type === 'normal') {
+            // Glow effect for non-classic skins
+            if (activeSkin.glow) {
+                ctx.save();
+                ctx.shadowColor = activeSkin.glow;
+                ctx.shadowBlur = 18;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'transparent';
+                ctx.strokeStyle = activeSkin.glow;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.restore();
+            }
+
             // Base sphere using radial gradient for 3D look
+            const skinC = activeSkin.color;
+            const isColored = skinC !== '#ffffff';
             const sphereGrad = ctx.createRadialGradient(
                 -this.radius * 0.3, -this.radius * 0.35, this.radius * 0.05,
                 0, 0, this.radius
             );
-
-            // If it's pure white, use grayscale. Otherwise, tint it heavily with the chosen color
-            if (this.color === '#ffffff' || this.color === '#dde') {
+            if (!isColored) {
                 sphereGrad.addColorStop(0, '#ffffff');
                 sphereGrad.addColorStop(0.4, '#f0f0f0');
                 sphereGrad.addColorStop(0.85, '#cccccc');
                 sphereGrad.addColorStop(1, '#999999');
             } else {
-                // Parse the hex color basic approximation
                 sphereGrad.addColorStop(0, '#ffffff');
-                sphereGrad.addColorStop(0.3, this.color);
-
-                // Add an alpha layer darkening the edges
-                ctx.globalAlpha = 1;
-                sphereGrad.addColorStop(0.85, this.color);
-                sphereGrad.addColorStop(1, '#222222');
+                sphereGrad.addColorStop(0.25, skinC);
+                sphereGrad.addColorStop(0.85, skinC);
+                sphereGrad.addColorStop(1, '#111111');
             }
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);

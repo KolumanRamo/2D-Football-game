@@ -25,8 +25,9 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     coins: { type: Number, default: 0 },
-    unlockedTrails: { type: [String], default: ['default'] },
-    equippedTrail: { type: String, default: 'default' }
+    unlockedItems: { type: [String], default: ['classic_ball', 'classic_jersey'] },
+    equippedBallSkin: { type: String, default: 'classic_ball' },
+    equippedJersey: { type: String, default: 'classic_jersey' }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -144,12 +145,13 @@ app.get('/api/me', authenticateToken, async (req, res) => {
 // Update data
 app.post('/api/update', authenticateToken, async (req, res) => {
     try {
-        const { coins, unlockedTrails, equippedTrail } = req.body;
+        const { coins, unlockedItems, equippedBallSkin, equippedJersey } = req.body;
 
         const updates = {};
         if (coins !== undefined) updates.coins = coins;
-        if (unlockedTrails !== undefined) updates.unlockedTrails = unlockedTrails;
-        if (equippedTrail !== undefined) updates.equippedTrail = equippedTrail;
+        if (unlockedItems !== undefined) updates.unlockedItems = unlockedItems;
+        if (equippedBallSkin !== undefined) updates.equippedBallSkin = equippedBallSkin;
+        if (equippedJersey !== undefined) updates.equippedJersey = equippedJersey;
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.userId,
@@ -180,6 +182,40 @@ app.get('/api/admin/givecoins/:username', async (req, res) => {
     } catch (err) {
         res.status(500).send('Hata oluştu: ' + err.message);
     }
+});
+
+// --- LOBBY MANAGEMENT (In-Memory) ---
+const lobbies = new Map(); // lobbyId -> { id, name, hostPeerId, isPrivate, createdAt }
+
+// Create a lobby
+app.post('/api/lobbies/create', authenticateToken, (req, res) => {
+    const { name, isPrivate, hostPeerId } = req.body;
+    if (!name || !hostPeerId) return res.status(400).json({ error: 'Name and hostPeerId required.' });
+    const id = Math.random().toString(36).substring(2, 10);
+    lobbies.set(id, { id, name, hostPeerId, isPrivate: !!isPrivate, createdAt: Date.now() });
+    // Auto-remove after 1 hour
+    setTimeout(() => lobbies.delete(id), 3600000);
+    res.json({ id });
+});
+
+// List public lobbies
+app.get('/api/lobbies', (req, res) => {
+    const publicLobbies = [];
+    lobbies.forEach(l => { if (!l.isPrivate) publicLobbies.push(l); });
+    res.json(publicLobbies);
+});
+
+// Get single lobby (for private link)
+app.get('/api/lobbies/:id', (req, res) => {
+    const lobby = lobbies.get(req.params.id);
+    if (!lobby) return res.status(404).json({ error: 'Lobby not found.' });
+    res.json(lobby);
+});
+
+// Delete lobby (host left / game started)
+app.delete('/api/lobbies/:id', authenticateToken, (req, res) => {
+    lobbies.delete(req.params.id);
+    res.json({ ok: true });
 });
 
 // Catch-all route to serve the main HTML file

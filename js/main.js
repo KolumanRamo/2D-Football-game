@@ -1411,6 +1411,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lobbyStartBtn) {
         lobbyStartBtn.addEventListener('click', () => {
             if (State.networkRole !== 'host') return;
+            State.isChaosMode = !!(document.getElementById('lobbyChaosMode') && document.getElementById('lobbyChaosMode').checked);
+            State.hotPotatoMode = !!(document.getElementById('lobbyBombMode') && document.getElementById('lobbyBombMode').checked);
+            State.suddenDeathMode = !!(document.getElementById('lobbySuddenDeath') && document.getElementById('lobbySuddenDeath').checked);
             NetworkManager.sendStartGame();
             lobbyMenu.classList.add('hidden');
             const myPlayerInfo = State.lobby.players[State.peerId];
@@ -1433,7 +1436,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lobby Settings Sync
-    const lobbyInputs = ['lobbyDuration', 'lobbyGoalLimit', 'lobbyWeather', 'lobbyBallType'];
+    const lobbyInputs = ['lobbyDuration', 'lobbyGoalLimit', 'lobbyWeather', 'lobbyBallType', 'lobbyChaosMode', 'lobbyBombMode', 'lobbySuddenDeath'];
     lobbyInputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -1574,6 +1577,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- METAGAME & SHOP INITIALIZATION ---
     initAuthUI();
     initShopUI();
+    initLobbyBrowser();
 
     drawField();
     player1.draw(ctx);
@@ -1630,10 +1634,10 @@ function initAuthUI() {
                 localStorage.setItem('arcadeFootball_token', authToken);
 
                 State.coins = data.user.coins || 0;
-                State.unlockedTrails = data.user.unlockedTrails || ['default'];
-                State.equippedTrail = data.user.equippedTrail || 'default';
+                State.unlockedItems = data.user.unlockedItems || ['classic_ball', 'classic_jersey'];
+                State.equippedBallSkin = data.user.equippedBallSkin || 'classic_ball';
+                State.equippedJersey = data.user.equippedJersey || 'classic_jersey';
                 updateCoinDisplay();
-                applyEquippedTrail();
 
                 authScreen.classList.add('hidden');
                 startScreen.classList.remove('hidden');
@@ -1656,8 +1660,9 @@ function initAuthUI() {
         authScreen.classList.add('hidden');
         startScreen.classList.remove('hidden');
         State.coins = 0;
-        State.unlockedTrails = ['default'];
-        State.equippedTrail = 'default';
+        State.unlockedItems = ['classic_ball', 'classic_jersey'];
+        State.equippedBallSkin = 'classic_ball';
+        State.equippedJersey = 'classic_jersey';
         updateCoinDisplay();
     });
 }
@@ -1672,10 +1677,10 @@ async function loadMetagameData() {
         if (res.ok) {
             const data = await res.json();
             State.coins = data.coins || 0;
-            State.unlockedTrails = data.unlockedTrails || ['default'];
-            State.equippedTrail = data.equippedTrail || 'default';
+            State.unlockedItems = data.unlockedItems || ['classic_ball', 'classic_jersey'];
+            State.equippedBallSkin = data.equippedBallSkin || 'classic_ball';
+            State.equippedJersey = data.equippedJersey || 'classic_jersey';
             updateCoinDisplay();
-            applyEquippedTrail();
         } else {
             // Token expired or invalid
             localStorage.removeItem('arcadeFootball_token');
@@ -1698,8 +1703,9 @@ async function saveMetagameData() {
             },
             body: JSON.stringify({
                 coins: State.coins,
-                unlockedTrails: State.unlockedTrails,
-                equippedTrail: State.equippedTrail
+                unlockedItems: State.unlockedItems,
+                equippedBallSkin: State.equippedBallSkin,
+                equippedJersey: State.equippedJersey
             })
         });
     } catch (e) {
@@ -1719,112 +1725,276 @@ function initShopUI() {
     const container = document.getElementById('shopItemsContainer');
 
     if (openShopBtn) openShopBtn.addEventListener('click', () => {
-        renderShopItems();
+        renderShop('ball');
         shopScreen.classList.remove('hidden');
     });
+    if (closeShopBtn) closeShopBtn.addEventListener('click', () => shopScreen.classList.add('hidden'));
 
-    if (closeShopBtn) closeShopBtn.addEventListener('click', () => {
-        shopScreen.classList.add('hidden');
-    });
-
-    const SHOP_ITEMS = [
-        { id: 'default', name: 'Klasik', color: '#ffffff', price: 0 },
-        { id: 'neon_green', name: 'Neon Yeşil', color: '#2ecc71', price: 100 },
-        { id: 'fire_orange', name: 'Alev Ateşi', color: '#e67e22', price: 250 },
-        { id: 'electric_blue', name: 'Elektrik Mavi', color: '#00d2d3', price: 250 },
-        { id: 'gold', name: 'Saf Altın', color: '#f1c40f', price: 500 },
-        { id: 'dark_matter', name: 'Karanlık Madde', color: '#8e44ad', price: 1000 }
+    const BALL_SKINS = [
+        { id: 'classic_ball', name: 'Klasik ⚽', color: '#cccccc', price: 0 },
+        { id: 'neon_ball', name: 'Neon 💚', color: '#2ecc71', price: 100 },
+        { id: 'fire_ball', name: 'Alev Ateşi 🔥', color: '#e67e22', price: 250 },
+        { id: 'electric_ball', name: 'Elektrik ⚡', color: '#00d2d3', price: 250 },
+        { id: 'gold_ball', name: 'Saf Altın 👑', color: '#f1c40f', price: 500 },
+        { id: 'dark_ball', name: 'Karanlık 🌑', color: '#8e44ad', price: 1000 },
     ];
 
-    function renderShopItems() {
+    const JERSEY_SKINS = [
+        { id: 'classic_jersey', name: 'Klasik Kırmızı', color: '#e74c3c', price: 0 },
+        { id: 'galaxy', name: 'Galaksi 🌌', color: '#9b59b6', price: 100 },
+        { id: 'emerald', name: 'Zümrüt 💚', color: '#27ae60', price: 250 },
+        { id: 'electric', name: 'Elektrik ⚡', color: '#0abde3', price: 250 },
+        { id: 'sunset', name: 'Gün Batımı 🌅', color: '#f39c12', price: 500 },
+        { id: 'gold_king', name: 'Altın Kral 👑', color: '#f1c40f', price: 1000 },
+        { id: 'dark_knight', name: 'Karanlık Şövalye 🖤', color: '#5d6d7e', price: 1000 },
+    ];
+
+    let activeTab = 'ball';
+
+    function renderShop(tab) {
+        activeTab = tab;
         if (!container) return;
         container.innerHTML = '';
 
-        SHOP_ITEMS.forEach(item => {
-            const isUnlocked = State.unlockedTrails.includes(item.id);
-            const isEquipped = State.equippedTrail === item.id;
+        const tabBar = document.createElement('div');
+        tabBar.style.cssText = 'display:flex;gap:10px;margin-bottom:18px;justify-content:center;';
+        ['ball', 'jersey'].forEach(t => {
+            const tb = document.createElement('button');
+            tb.innerText = t === 'ball' ? '⚽ Top Skinleri' : '👕 Forma Skinleri';
+            tb.style.cssText = `padding:8px 18px;border-radius:8px;border:none;font-weight:bold;font-size:0.9rem;cursor:pointer;background:${t === tab ? '#e67e22' : '#2c3e50'};color:white;transition:background 0.2s;`;
+            tb.addEventListener('click', () => renderShop(t));
+            tabBar.appendChild(tb);
+        });
+        container.appendChild(tabBar);
+
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:14px;justify-content:center;';
+        const items = tab === 'ball' ? BALL_SKINS : JERSEY_SKINS;
+        const equippedKey = tab === 'ball' ? 'equippedBallSkin' : 'equippedJersey';
+
+        items.forEach(item => {
+            const unlockedItems = State.unlockedItems || ['classic_ball', 'classic_jersey'];
+            const isUnlocked = unlockedItems.includes(item.id) || item.price === 0;
+            const isEquipped = State[equippedKey] === item.id;
 
             const card = document.createElement('div');
-            card.style.background = '#2c3e50';
-            card.style.padding = '15px';
-            card.style.borderRadius = '10px';
-            card.style.width = '120px';
-            card.style.textAlign = 'center';
-            card.style.border = isEquipped ? `3px solid ${item.color}` : '3px solid transparent';
+            card.style.cssText = `background:#2c3e50;padding:15px;border-radius:12px;width:115px;text-align:center;border:3px solid ${isEquipped ? item.color : 'transparent'};box-shadow:${isEquipped ? `0 0 14px ${item.color}` : 'none'};transition:all 0.2s;`;
 
-            let btnText = 'SATIN AL';
-            let btnBg = '#e67e22';
-            let btnAction = 'buy';
+            let btnText = 'SATIN AL', btnBg = '#e67e22', btnAction = 'buy';
+            if (isEquipped) { btnText = 'KUŞANILDI'; btnBg = '#27ae60'; btnAction = 'none'; }
+            else if (isUnlocked) { btnText = 'KUŞAN'; btnBg = '#2980b9'; btnAction = 'equip'; }
+            else if (State.coins < item.price) { btnText = 'YETERSİZ'; btnBg = '#7f8c8d'; btnAction = 'none'; }
 
-            if (isEquipped) {
-                btnText = 'KUŞANILDI';
-                btnBg = '#27ae60';
-                btnAction = 'none';
-            } else if (isUnlocked) {
-                btnText = 'KUŞAN';
-                btnBg = '#2980b9';
-                btnAction = 'equip';
-            } else if (State.coins < item.price) {
-                btnText = 'YETERSİZ';
-                btnBg = '#7f8c8d';
-                btnAction = 'none';
-            }
+            const previewIcon = tab === 'ball'
+                ? `<div style="width:40px;height:40px;border-radius:50%;background:${item.color};margin:0 auto 8px;box-shadow:0 0 14px ${item.color};"></div>`
+                : `<div style="width:40px;height:40px;border-radius:6px;background:${item.color};margin:0 auto 8px;box-shadow:0 0 10px ${item.color};display:flex;align-items:center;justify-content:center;font-size:18px;">👕</div>`;
 
             card.innerHTML = `
-                <div style="font-weight: bold; color: white; margin-bottom: 10px;">${item.name}</div>
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: ${item.color}; margin: 0 auto 10px auto; box-shadow: 0 0 15px ${item.color};"></div>
-                <div style="color: #f1c40f; font-weight: bold; margin-bottom: 10px;">${isUnlocked ? 'SAHİP' : '🪙 ' + item.price}</div>
-                <button class="shop-item-btn" data-action="${btnAction}" data-id="${item.id}" data-price="${item.price}" style="background: ${btnBg}; width: 100%; padding: 5px; font-size: 0.8rem; border-radius: 5px; border: none; font-weight: bold; color: white; cursor: pointer;">${btnText}</button>
+                <div style="font-weight:bold;color:white;margin-bottom:8px;font-size:0.8rem;">${item.name}</div>
+                ${previewIcon}
+                <div style="color:#f1c40f;font-weight:bold;margin-bottom:8px;font-size:0.85rem;">${isUnlocked ? 'SAHİP ✓' : '🪙 ' + item.price}</div>
+                <button class="shop-item-btn" data-action="${btnAction}" data-id="${item.id}" data-price="${item.price}" data-type="${tab}"
+                    style="background:${btnBg};width:100%;padding:5px;font-size:0.75rem;border-radius:6px;border:none;font-weight:bold;color:white;cursor:pointer;">${btnText}</button>
             `;
-            container.appendChild(card);
+            grid.appendChild(card);
         });
+        container.appendChild(grid);
 
-        // Bind buttons
-        const btns = container.querySelectorAll('.shop-item-btn');
-        btns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        container.querySelectorAll('.shop-item-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
                 const action = e.target.getAttribute('data-action');
                 const id = e.target.getAttribute('data-id');
                 const price = parseInt(e.target.getAttribute('data-price'));
+                const type = e.target.getAttribute('data-type');
+                const equipped = type === 'ball' ? 'equippedBallSkin' : 'equippedJersey';
+
+                if (!State.unlockedItems) State.unlockedItems = ['classic_ball', 'classic_jersey'];
 
                 if (action === 'buy') {
                     if (State.coins >= price) {
                         State.coins -= price;
-                        State.unlockedTrails.push(id);
-                        State.equippedTrail = id;
+                        State.unlockedItems.push(id);
+                        State[equipped] = id;
                         saveMetagameData();
-                        renderShopItems();
                         updateCoinDisplay();
-
-                        // Apply immediately if active
-                        let c = '#ffffff';
-                        SHOP_ITEMS.forEach(i => { if (i.id === id) c = i.color; });
-                        ball.color = c;
+                        renderShop(activeTab);
                     }
                 } else if (action === 'equip') {
-                    State.equippedTrail = id;
+                    State[equipped] = id;
                     saveMetagameData();
-                    renderShopItems();
-
-                    let c = '#ffffff';
-                    SHOP_ITEMS.forEach(i => { if (i.id === id) c = i.color; });
-                    ball.color = c;
+                    renderShop(activeTab);
                 }
             });
         });
     }
 }
 
-window.applyEquippedTrail = function() {
-    if (!State.equippedTrail) return;
-    let c = '#dde';
-    switch (State.equippedTrail) {
-        case 'neon_green': c = '#2ecc71'; break;
-        case 'fire_orange': c = '#e67e22'; break;
-        case 'electric_blue': c = '#00d2d3'; break;
-        case 'gold': c = '#f1c40f'; break;
-        case 'dark_matter': c = '#8e44ad'; break;
-        default: c = '#ffffff';
+// ============================================================
+// LOBİLER - Lobby Browser System
+// ============================================================
+async function initLobbyBrowser() {
+    const screen = document.getElementById('lobbiesScreen');
+    const modal = document.getElementById('lobbyCreateModal');
+    const listEl = document.getElementById('lobbyListContainer');
+    const lobbiesBtn = document.getElementById('lobbiesBtn');
+    const startScreen = document.getElementById('startScreen');
+    const closeBrowserBtn = document.getElementById('closeLobbyBrowserBtn');
+    const refreshBtn = document.getElementById('refreshLobbiesBtn');
+    const createBtn = document.getElementById('createLobbyBtn');
+    const createConfirmBtn = document.getElementById('lobbyCreateConfirmBtn');
+    const createCancelBtn = document.getElementById('lobbyCreateCancelBtn');
+    const nameInput = document.getElementById('lobbyNameInput');
+    const errEl = document.getElementById('lobbyCreateError');
+
+    let isPrivate = false; // default: public
+
+    // Privacy toggle buttons
+    document.querySelectorAll('.lobby-privacy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            isPrivate = btn.getAttribute('data-val') === 'private';
+            document.querySelectorAll('.lobby-privacy-btn').forEach(b => {
+                const isActive = b.getAttribute('data-val') === (isPrivate ? 'private' : 'public');
+                b.style.background = isActive ? '#27ae60' : '#2c3e50';
+                b.style.borderColor = isActive ? '#27ae60' : '#666';
+            });
+        });
+    });
+
+    // Open lobby browser
+    if (lobbiesBtn) lobbiesBtn.addEventListener('click', async () => {
+        startScreen.classList.add('hidden');
+        screen.classList.remove('hidden');
+        await loadLobbyList();
+        // Auto-join if URL has ?lobby=ID
+        const params = new URLSearchParams(window.location.search);
+        const lobbyId = params.get('lobby');
+        if (lobbyId) await joinLobbyById(lobbyId);
+    });
+
+    if (closeBrowserBtn) closeBrowserBtn.addEventListener('click', () => {
+        screen.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+    });
+
+    if (refreshBtn) refreshBtn.addEventListener('click', loadLobbyList);
+
+    // ---- Load & render public lobby list ----
+    async function loadLobbyList() {
+        listEl.innerHTML = '<div style="color:#aaa;text-align:center;padding:40px;">Yükleniyor...</div>';
+        try {
+            const res = await fetch('/api/lobbies');
+            const lobbies = await res.json();
+            if (!Array.isArray(lobbies) || lobbies.length === 0) {
+                listEl.innerHTML = '<div style="color:#888;text-align:center;padding:40px;font-size:1.1rem;">Şu an aktif lobi yok. İlk sen aç! 🚀</div>';
+                return;
+            }
+            listEl.innerHTML = '';
+            lobbies.forEach(lobby => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:rgba(255,255,255,0.05);border-radius:10px;padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.1);';
+                row.innerHTML = `
+                    <div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:white;">${lobby.isPrivate ? '🔒' : '🌐'} ${lobby.name}</div>
+                        <div style="font-size:0.8rem;color:#aaa;">ID: ${lobby.id}</div>
+                    </div>
+                    <button class="join-lobby-btn" data-id="${lobby.id}" style="background:#8e44ad;padding:8px 18px;border-radius:8px;border:none;color:white;font-weight:bold;cursor:pointer;">KATIL</button>
+                `;
+                listEl.appendChild(row);
+            });
+            listEl.querySelectorAll('.join-lobby-btn').forEach(btn => {
+                btn.addEventListener('click', () => joinLobbyById(btn.getAttribute('data-id')));
+            });
+        } catch (e) {
+            listEl.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:40px;">Lobiler yüklenemedi.</div>';
+        }
     }
-    ball.color = c;
+
+    // ---- Join lobby by ID (fetch hostPeerId, then connect) ----
+    async function joinLobbyById(id) {
+        try {
+            const res = await fetch(`/api/lobbies/${id}`);
+            if (!res.ok) { alert('Lobi bulunamadı veya kapandı.'); return; }
+            const lobby = await res.json();
+            // Fill the peer join input and click join
+            screen.classList.add('hidden');
+            const onlineMenu = document.getElementById('onlineMenu');
+            onlineMenu.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+            const joinInput = document.getElementById('joinIdInput');
+            if (joinInput) joinInput.value = lobby.hostPeerId;
+            // Auto click the join button
+            const joinBtn = document.getElementById('joinBtn');
+            if (joinBtn) joinBtn.click();
+        } catch (e) {
+            alert('Lobiye katılınamadı.');
+        }
+    }
+
+    // ---- Open create modal ----
+    if (createBtn) createBtn.addEventListener('click', () => {
+        nameInput.value = '';
+        errEl.innerText = '';
+        modal.classList.remove('hidden');
+    });
+
+    if (createCancelBtn) createCancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+    // ---- Create lobby ----
+    if (createConfirmBtn) createConfirmBtn.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        if (!name) { errEl.innerText = 'Lütfen bir lobi adı girin.'; return; }
+        if (!authToken) { errEl.innerText = 'Lobi açmak için giriş yapmanız gerekiyor.'; return; }
+
+        // First we need a PeerID. Open the online menu and get a peer, register once we have it.
+        errEl.innerText = 'Oda oluşturuluyor...';
+        modal.classList.add('hidden');
+        screen.classList.add('hidden');
+        startScreen.classList.add('hidden');
+
+        // Open the regular online menu (triggers peer creation)
+        const onlineMenu = document.getElementById('onlineMenu');
+        onlineMenu.classList.remove('hidden');
+
+        // Click host button to generate a peer
+        const hostBtn = document.getElementById('hostBtn');
+        if (hostBtn) hostBtn.click();
+
+        // Wait for peerId to be available then register lobby
+        let tries = 0;
+        const waitForPeer = setInterval(async () => {
+            tries++;
+            const peerIdEl = document.getElementById('myPeerId');
+            const peerId = peerIdEl && peerIdEl.innerText && peerIdEl.innerText !== '...' ? peerIdEl.innerText : null;
+            if (peerId || tries > 30) {
+                clearInterval(waitForPeer);
+                if (!peerId) return;
+                try {
+                    const reg = await fetch('/api/lobbies/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                        body: JSON.stringify({ name, isPrivate, hostPeerId: peerId })
+                    });
+                    const data = await reg.json();
+                    if (data.id) {
+                        // Update room name display
+                        const roomName = document.getElementById('lobbyRoomName');
+                        if (roomName) roomName.innerText = `${isPrivate ? '🔒' : '🌐'} ${name}`;
+                        // For private: show the link
+                        if (isPrivate) {
+                            const link = `${window.location.origin}/?lobby=${data.id}`;
+                            alert(`Gizli lobiniz oluşturuldu!\n\nDavet linki:\n${link}\n\nBu linki arkadaşınızla paylaşın.`);
+                        }
+                    }
+                } catch (ex) { console.error('Lobby register error', ex); }
+            }
+        }, 500);
+    });
 }
+
+// Check if URL has lobby= param on load
+window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('lobby')) {
+        // Lobby join will be handled after auth in initLobbyBrowser
+    }
+});

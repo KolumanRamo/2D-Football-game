@@ -85,6 +85,12 @@ export const State = {
     stateBuffer: [],
     lerpFactor: 0.3, // How fast we blend client positions (for opponent/ball)
 
+    // Shop / Cosmetics
+    coins: 0,
+    unlockedItems: ['classic_ball', 'classic_jersey'],  // unlocked item IDs
+    equippedBallSkin: 'classic_ball',   // which ball skin is active
+    equippedJersey: 'classic_jersey',   // which jersey skin is active
+
     // Lobby State for Online
     lobby: {
         players: {}, // peerId -> { name: string, team: 'red' | 'blue' | 'spec', isHost: boolean }
