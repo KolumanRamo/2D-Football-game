@@ -1876,6 +1876,21 @@ async function initLobbyBrowser() {
         startScreen.classList.remove('hidden');
     });
 
+    // Direct peer code join
+    const directJoinBtn = document.getElementById('directJoinBtn');
+    if (directJoinBtn) directJoinBtn.addEventListener('click', () => {
+        const code = (document.getElementById('directJoinInput') || {}).value?.trim();
+        if (!code) return;
+        screen.classList.add('hidden');
+        const onlineMenu = document.getElementById('onlineMenu');
+        onlineMenu.classList.remove('hidden');
+        startScreen.classList.add('hidden');
+        const joinInput = document.getElementById('joinIdInput');
+        if (joinInput) joinInput.value = code;
+        const joinBtn = document.getElementById('joinBtn');
+        if (joinBtn) joinBtn.click();
+    });
+
     if (refreshBtn) refreshBtn.addEventListener('click', loadLobbyList);
 
     // ---- Load & render public lobby list ----

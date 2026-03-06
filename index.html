@@ -211,10 +211,7 @@
                 </label>
             </div>
 
-            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
-                <button id="lobbiesBtn" style="background: #8e44ad; flex:1; max-width:200px;">🏟️ LOBİLER</button>
-                <button id="onlineBtn" style="background: #2980b9; flex:1; max-width:200px;">🔗 KOD İLE BAĞ</button>
-            </div>
+            <button id="lobbiesBtn" style="background: #8e44ad; margin-bottom: 10px; width: 210px;">🏟️ LOBİLER</button>
             <button id="startBtn" data-i18n="start_btn">MAÇA BAŞLA</button>
         </div>
 
@@ -436,7 +433,17 @@
                     <button id="closeLobbyBrowserBtn" class="secondary-btn" style="padding:8px 14px;">✕</button>
                 </div>
             </div>
-            <div id="lobbyListContainer" style="min-height:200px;">
+            
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:18px;background:rgba(255,255,255,0.05);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">
+                <div style="flex:1;">
+                    <div style="font-weight:bold;color:white;margin-bottom:6px;">🔗 Kod ile Katıl</div>
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="directJoinInput" placeholder="Peer ID veya Lobi Kodu gir..."
+                            style="flex:1;padding:8px;border-radius:6px;border:none;background:#2c3e50;color:white;font-size:0.9rem;">
+                        <button id="directJoinBtn" style="background:#27ae60;padding:8px 16px;border-radius:6px;border:none;color:white;font-weight:bold;cursor:pointer;">KATIL</button>
+                    </div>
+                </div>
+            </div>            <div id="lobbyListContainer" style="min-height:200px;">
                 <div style="color:#aaa;text-align:center;padding:40px;">Lobiler yükleniyor...</div>
             </div>
         </div>
