@@ -1645,22 +1645,9 @@ function initAuthUI() {
         }
     }
 
-    function applyEquippedTrail() {
-        if (!State.equippedTrail) return;
-        let c = '#dde';
-        switch (State.equippedTrail) {
-            case 'neon_green': c = '#2ecc71'; break;
-            case 'fire_orange': c = '#e67e22'; break;
-            case 'electric_blue': c = '#00d2d3'; break;
-            case 'gold': c = '#f1c40f'; break;
-            case 'dark_matter': c = '#8e44ad'; break;
-            default: c = '#ffffff';
-        }
-        ball.color = c;
+    if (authToken) {
+        // We will apply the trail after loadMetagameData fetches it
     }
-
-    // Call it right away if auth existing
-    if (authToken) applyEquippedTrail();
 
     if (loginBtn) loginBtn.addEventListener('click', () => handleAuth(true));
     if (registerBtn) registerBtn.addEventListener('click', () => handleAuth(false));
@@ -1688,6 +1675,7 @@ async function loadMetagameData() {
             State.unlockedTrails = data.unlockedTrails || ['default'];
             State.equippedTrail = data.equippedTrail || 'default';
             updateCoinDisplay();
+            applyEquippedTrail();
         } else {
             // Token expired or invalid
             localStorage.removeItem('arcadeFootball_token');
@@ -1825,4 +1813,18 @@ function initShopUI() {
             });
         });
     }
+}
+
+window.applyEquippedTrail = function() {
+    if (!State.equippedTrail) return;
+    let c = '#dde';
+    switch (State.equippedTrail) {
+        case 'neon_green': c = '#2ecc71'; break;
+        case 'fire_orange': c = '#e67e22'; break;
+        case 'electric_blue': c = '#00d2d3'; break;
+        case 'gold': c = '#f1c40f'; break;
+        case 'dark_matter': c = '#8e44ad'; break;
+        default: c = '#ffffff';
+    }
+    ball.color = c;
 }
