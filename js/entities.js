@@ -914,10 +914,23 @@ export class Ball extends Entity {
                 -this.radius * 0.3, -this.radius * 0.35, this.radius * 0.05,
                 0, 0, this.radius
             );
-            sphereGrad.addColorStop(0, '#ffffff');
-            sphereGrad.addColorStop(0.4, '#f0f0f0');
-            sphereGrad.addColorStop(0.85, '#cccccc');
-            sphereGrad.addColorStop(1, '#999999');
+
+            // If it's pure white, use grayscale. Otherwise, tint it heavily with the chosen color
+            if (this.color === '#ffffff' || this.color === '#dde') {
+                sphereGrad.addColorStop(0, '#ffffff');
+                sphereGrad.addColorStop(0.4, '#f0f0f0');
+                sphereGrad.addColorStop(0.85, '#cccccc');
+                sphereGrad.addColorStop(1, '#999999');
+            } else {
+                // Parse the hex color basic approximation
+                sphereGrad.addColorStop(0, '#ffffff');
+                sphereGrad.addColorStop(0.3, this.color);
+
+                // Add an alpha layer darkening the edges
+                ctx.globalAlpha = 1;
+                sphereGrad.addColorStop(0.85, this.color);
+                sphereGrad.addColorStop(1, '#222222');
+            }
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = sphereGrad;
