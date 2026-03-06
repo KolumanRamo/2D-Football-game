@@ -184,38 +184,52 @@ app.get('/api/admin/givecoins/:username', async (req, res) => {
     }
 });
 
-// --- LOBBY MANAGEMENT (In-Memory) ---
-const lobbies = new Map(); // lobbyId -> { id, name, hostPeerId, isPrivate, createdAt }
+// --- LOBBY MANAGEMENT (MongoDB-backed, survives server restarts) ---
+const lobbySchema = new mongoose.Schema({
+    id:          { type: String, required: true, unique: true },
+    name:        { type: String, required: true },
+    hostPeerId:  { type: String, required: true },
+    isPrivate:   { type: Boolean, default: false },
+    createdAt:   { type: Date, default: Date.now, expires: 3600 } // TTL: auto-delete after 1h
+});
+const Lobby = mongoose.model('Lobby', lobbySchema);
 
 // Create a lobby
-app.post('/api/lobbies/create', authenticateToken, (req, res) => {
-    const { name, isPrivate, hostPeerId } = req.body;
-    if (!name || !hostPeerId) return res.status(400).json({ error: 'Name and hostPeerId required.' });
-    const id = Math.random().toString(36).substring(2, 10);
-    lobbies.set(id, { id, name, hostPeerId, isPrivate: !!isPrivate, createdAt: Date.now() });
-    // Auto-remove after 1 hour
-    setTimeout(() => lobbies.delete(id), 3600000);
-    res.json({ id });
+app.post('/api/lobbies/create', authenticateToken, async (req, res) => {
+    try {
+        const { name, isPrivate, hostPeerId } = req.body;
+        if (!name || !hostPeerId) return res.status(400).json({ error: 'Name and hostPeerId required.' });
+        // Remove any old lobby from this host first (cleanup)
+        await Lobby.deleteMany({ hostPeerId });
+        const id = Math.random().toString(36).substring(2, 10);
+        await Lobby.create({ id, name, hostPeerId, isPrivate: !!isPrivate });
+        res.json({ id });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// List public lobbies
-app.get('/api/lobbies', (req, res) => {
-    const publicLobbies = [];
-    lobbies.forEach(l => { if (!l.isPrivate) publicLobbies.push(l); });
-    res.json(publicLobbies);
+// List public lobbies (only non-expired)
+app.get('/api/lobbies', async (req, res) => {
+    try {
+        const lobbies = await Lobby.find({ isPrivate: false }).sort({ createdAt: -1 }).limit(50);
+        res.json(lobbies);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Get single lobby (for private link)
-app.get('/api/lobbies/:id', (req, res) => {
-    const lobby = lobbies.get(req.params.id);
-    if (!lobby) return res.status(404).json({ error: 'Lobby not found.' });
-    res.json(lobby);
+app.get('/api/lobbies/:id', async (req, res) => {
+    try {
+        const lobby = await Lobby.findOne({ id: req.params.id });
+        if (!lobby) return res.status(404).json({ error: 'Lobby not found.' });
+        res.json(lobby);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Delete lobby (host left / game started)
-app.delete('/api/lobbies/:id', authenticateToken, (req, res) => {
-    lobbies.delete(req.params.id);
-    res.json({ ok: true });
+app.delete('/api/lobbies/:id', authenticateToken, async (req, res) => {
+    try {
+        await Lobby.deleteOne({ id: req.params.id });
+        res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Catch-all route to serve the main HTML file

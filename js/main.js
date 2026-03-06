@@ -803,16 +803,32 @@ function checkPlayerPlayerCollision(p1, p2) {
     }
 }
 
+let _lastLoopTime = 0;
+let _physicsAccumulator = 0;
+const PHYSICS_STEP = 1000 / 60; // Always simulate at 60fps
+
 function gameLoop(timestamp) {
     if (!State.gameRunning) return;
 
     if (State.gamePaused) {
+        _lastLoopTime = timestamp;
         requestAnimationFrame(gameLoop);
         return;
     }
 
+    // Delta-time: how many ms since last frame (capped at 100ms to avoid spiral on tab-switch)
+    const dt = Math.min(timestamp - (_lastLoopTime || timestamp), 100);
+    _lastLoopTime = timestamp;
+    _physicsAccumulator += dt;
+
+    // Only run physics when enough time has accumulated for a 60fps step
+    const physicsStepsThisFrame = Math.floor(_physicsAccumulator / PHYSICS_STEP);
+    _physicsAccumulator -= physicsStepsThisFrame * PHYSICS_STEP;
+    // If more than 3 steps fall behind, clamp to avoid spiral-of-death
+    const stepsToRun = Math.min(physicsStepsThisFrame, 3);
+
     State.frameCount++;
-    let shouldUpdate = true;
+    let shouldUpdate = stepsToRun > 0;
     if (State.slowMoTimer > 0) {
         State.slowMoTimer--;
         if (State.frameCount % State.slowMoFactor !== 0) {
@@ -872,7 +888,8 @@ function gameLoop(timestamp) {
         }
     }
 
-    if (shouldUpdate && !State.isGoalCelebration) {
+    // Run physics stepsToRun times to normalize speed at any frame rate
+    for (let _step = 0; _step < stepsToRun && !State.isGoalCelebration; _step++) {
         updateWeatherEffects();
 
         // --- GATHER INPUTS ---
@@ -1021,7 +1038,7 @@ function gameLoop(timestamp) {
 
         checkPlayerBallCollision(player1);
         checkPlayerBallCollision(player2);
-    }
+    } // end physics stepsToRun loop
 
     drawShadows();
     drawBallTrail();
