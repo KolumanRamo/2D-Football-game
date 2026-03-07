@@ -16,9 +16,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '')));
 
 // Connect to MongoDB
+let isDbConnected = false;
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB connection error:', err));
+    .then(() => {
+        console.log('MongoDB Connected');
+        isDbConnected = true;
+    })
+    .catch(err => {
+        console.error('MongoDB connection error, falling back to restricted mode:', err.message);
+    });
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -36,6 +42,8 @@ const User = mongoose.model('User', userSchema);
 
 // Register
 app.post('/api/register', async (req, res) => {
+    if (!isDbConnected) return res.status(503).json({ error: 'Veritabanı bağlantısı yok.' });
+
     const { username, password } = req.body;
 
     if (!username || !password || username.trim() === '' || password.trim() === '') {
@@ -78,6 +86,8 @@ app.post('/api/register', async (req, res) => {
 
 // Login
 app.post('/api/login', async (req, res) => {
+    if (!isDbConnected) return res.status(503).json({ error: 'Veritabanı bağlantısı yok.' });
+
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -119,6 +129,11 @@ function authenticateToken(req, res, next) {
     const token = authHeader && authHeader.split(' ')[1]; // "Bearer TOKEN"
 
     if (!token) return res.status(401).json({ error: 'Yetkisiz erişim.' });
+
+    if (!isDbConnected && token === 'offline_guest_token') {
+        req.user = { userId: 'guest_' + Math.floor(Math.random() * 10000) };
+        return next();
+    }
 
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(403).json({ error: 'Geçersiz veya süresi dolmuş token.' });
@@ -184,24 +199,35 @@ app.get('/api/admin/givecoins/:username', async (req, res) => {
     }
 });
 
-// --- LOBBY MANAGEMENT (MongoDB-backed, survives server restarts) ---
+// --- LOBBY MANAGEMENT (MongoDB-backed + fallback) ---
+// If MongoDB is down, we use in-memory just so players can still play
+const fallbackLobbies = []; // { id, name, hostPeerId, isPrivate, createdAt }
+
 const lobbySchema = new mongoose.Schema({
-    id:          { type: String, required: true, unique: true },
-    name:        { type: String, required: true },
-    hostPeerId:  { type: String, required: true },
-    isPrivate:   { type: Boolean, default: false },
-    createdAt:   { type: Date, default: Date.now, expires: 3600 } // TTL: auto-delete after 1h
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    hostPeerId: { type: String, required: true },
+    isPrivate: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now, expires: 3600 } // TTL: auto-delete after 1h
 });
 const Lobby = mongoose.model('Lobby', lobbySchema);
 
 // Create a lobby
 app.post('/api/lobbies/create', authenticateToken, async (req, res) => {
+    console.log('[API] Create Lobby requested by:', req.user, req.body);
     try {
         const { name, isPrivate, hostPeerId } = req.body;
         if (!name || !hostPeerId) return res.status(400).json({ error: 'Name and hostPeerId required.' });
+        const id = Math.random().toString(36).substring(2, 10);
+
+        if (!isDbConnected) {
+            // Memory fallback
+            fallbackLobbies.push({ id, name, hostPeerId, isPrivate: !!isPrivate, createdAt: new Date() });
+            return res.json({ id });
+        }
+
         // Remove any old lobby from this host first (cleanup)
         await Lobby.deleteMany({ hostPeerId });
-        const id = Math.random().toString(36).substring(2, 10);
         await Lobby.create({ id, name, hostPeerId, isPrivate: !!isPrivate });
         res.json({ id });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -209,7 +235,11 @@ app.post('/api/lobbies/create', authenticateToken, async (req, res) => {
 
 // List public lobbies (only non-expired)
 app.get('/api/lobbies', async (req, res) => {
+    console.log('[API] Get Lobbies requested from:', req.ip);
     try {
+        if (!isDbConnected) {
+            return res.json(fallbackLobbies.filter(l => !l.isPrivate));
+        }
         const lobbies = await Lobby.find({ isPrivate: false }).sort({ createdAt: -1 }).limit(50);
         res.json(lobbies);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -218,6 +248,11 @@ app.get('/api/lobbies', async (req, res) => {
 // Get single lobby (for private link)
 app.get('/api/lobbies/:id', async (req, res) => {
     try {
+        if (!isDbConnected) {
+            const l = fallbackLobbies.find(x => x.id === req.params.id);
+            if (!l) return res.status(404).json({ error: 'Lobby not found.' });
+            return res.json(l);
+        }
         const lobby = await Lobby.findOne({ id: req.params.id });
         if (!lobby) return res.status(404).json({ error: 'Lobby not found.' });
         res.json(lobby);
@@ -227,6 +262,11 @@ app.get('/api/lobbies/:id', async (req, res) => {
 // Delete lobby (host left / game started)
 app.delete('/api/lobbies/:id', authenticateToken, async (req, res) => {
     try {
+        if (!isDbConnected) {
+            const index = fallbackLobbies.findIndex(l => l.id === req.params.id);
+            if (index > -1) fallbackLobbies.splice(index, 1);
+            return res.json({ ok: true });
+        }
         await Lobby.deleteOne({ id: req.params.id });
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }

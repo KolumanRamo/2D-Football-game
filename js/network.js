@@ -29,7 +29,22 @@ export const NetworkManager = {
 
         this.peer.on('error', (err) => {
             console.error('PeerJS Error:', err);
-            alert('Bağlantı Hatası: ' + err.type);
+            alert('Bağlantı Hatası (Sunucu Kapanmış Olabilir): ' + err.type);
+
+            // Reset UI and State back to main screen to prevent getting stuck
+            State.isOnline = false;
+            State.networkRole = null;
+            if (this.conn) {
+                this.conn.close();
+                this.conn = null;
+                State.conn = null;
+            }
+            const onlineMenu = document.getElementById('onlineMenu');
+            if (onlineMenu) onlineMenu.classList.add('hidden');
+            const lobbyMenu = document.getElementById('lobbyMenu');
+            if (lobbyMenu) lobbyMenu.classList.add('hidden');
+            const startScreen = document.getElementById('startScreen');
+            if (startScreen) startScreen.classList.remove('hidden');
         });
     },
 
@@ -42,7 +57,16 @@ export const NetworkManager = {
     },
 
     join(remoteId) {
-        if (!remoteId) return alert("Lütfen bir oda kodu girin!");
+        if (!remoteId) {
+            alert("Lobi bulunamadı veya lobi sahibi odadan çıkmış. (Geçersiz Oda)");
+            const onlineMenu = document.getElementById('onlineMenu');
+            if (onlineMenu) onlineMenu.classList.add('hidden');
+            const lobbiesScreen = document.getElementById('lobbiesScreen');
+            if (lobbiesScreen) lobbiesScreen.classList.remove('hidden');
+            const startScreen = document.getElementById('startScreen');
+            if (startScreen && lobbiesScreen && lobbiesScreen.classList.contains('hidden')) startScreen.classList.remove('hidden');
+            return;
+        }
 
         State.networkRole = 'client';
         State.isOnline = true;

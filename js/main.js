@@ -808,6 +808,7 @@ let _physicsAccumulator = 0;
 const PHYSICS_STEP = 1000 / 60; // Always simulate at 60fps
 
 function gameLoop(timestamp) {
+    if (!timestamp) timestamp = performance.now();
     if (!State.gameRunning) return;
 
     if (State.gamePaused) {
@@ -816,16 +817,21 @@ function gameLoop(timestamp) {
         return;
     }
 
-    // Delta-time: how many ms since last frame (capped at 100ms to avoid spiral on tab-switch)
-    const dt = Math.min(timestamp - (_lastLoopTime || timestamp), 100);
+    // Delta-time: how many ms since last frame (capped at 250ms to avoid huge lag spikes, e.g tab-switch)
+    const dt = Math.min(timestamp - (_lastLoopTime || timestamp), 250);
     _lastLoopTime = timestamp;
     _physicsAccumulator += dt;
 
-    // Only run physics when enough time has accumulated for a 60fps step
-    const physicsStepsThisFrame = Math.floor(_physicsAccumulator / PHYSICS_STEP);
-    _physicsAccumulator -= physicsStepsThisFrame * PHYSICS_STEP;
-    // If more than 3 steps fall behind, clamp to avoid spiral-of-death
-    const stepsToRun = Math.min(physicsStepsThisFrame, 3);
+    let stepsToRun = Math.floor(_physicsAccumulator / PHYSICS_STEP);
+
+    // If more than 15 steps fall behind (~4 FPS), clamp to avoid spiral-of-death
+    if (stepsToRun > 15) {
+        stepsToRun = 15;
+        // Discard the excess time to forcibly catch up to real-time
+        _physicsAccumulator = stepsToRun * PHYSICS_STEP;
+    }
+
+    _physicsAccumulator -= stepsToRun * PHYSICS_STEP;
 
     State.frameCount++;
     let shouldUpdate = stepsToRun > 0;
@@ -837,6 +843,8 @@ function gameLoop(timestamp) {
     } else {
         State.slowMoFactor = 1;
     }
+
+    if (!shouldUpdate) stepsToRun = 0;
 
     ctx.clearRect(0, 0, Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT);
 
@@ -1226,6 +1234,7 @@ function updateLobbyUI() {
 
     let redCount = 0;
     let blueCount = 0;
+    let readyCount = 0;
 
     for (const [id, player] of Object.entries(State.lobby.players)) {
         const div = document.createElement('div');
@@ -1374,6 +1383,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startBtn) startBtn.addEventListener('click', initGame);
     if (restartBtn) restartBtn.addEventListener('click', initGame);
     if (resumeBtn) resumeBtn.addEventListener('click', togglePause);
+
+    // Inject Logout Button if user is logged in
+    const cachedToken = localStorage.getItem('authToken');
+    if (cachedToken && cachedToken !== 'offline_guest_token') {
+        const startScreenEl = document.getElementById('startScreen');
+        if (startScreenEl) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.id = 'logoutBtn';
+            logoutBtn.innerText = '🚪 Çıkış Yap';
+            logoutBtn.style.cssText = 'position: absolute; top: 10px; left: 10px; background: #c0392b; padding: 8px 15px; font-size: 0.9rem; border: 2px solid #e74c3c; border-radius: 5px; font-weight: bold; cursor: pointer; color: white;';
+            startScreenEl.appendChild(logoutBtn);
+
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('username');
+                State.player1Name = 'Oyuncu 1';
+                State.player2Name = 'Oyuncu 2';
+                authToken = null;
+                alert('Çıkış yapıldı.');
+                window.location.reload();
+            });
+        }
+    }
 
     // Online UI Listeners
     const onlineBtn = document.getElementById('onlineBtn');
@@ -1647,19 +1679,33 @@ function initAuthUI() {
             const data = await res.json();
 
             if (res.ok) {
+                // Success
                 authToken = data.token;
                 localStorage.setItem('arcadeFootball_token', authToken);
-
+                State.p1Name = data.user.username;
+                State.p2Name = data.user.username + " (Misafir)";
                 State.coins = data.user.coins || 0;
                 State.unlockedItems = data.user.unlockedItems || ['classic_ball', 'classic_jersey'];
                 State.equippedBallSkin = data.user.equippedBallSkin || 'classic_ball';
                 State.equippedJersey = data.user.equippedJersey || 'classic_jersey';
-                updateCoinDisplay();
-
                 authScreen.classList.add('hidden');
-                startScreen.classList.remove('hidden');
+                updateCoinDisplay();
             } else {
-                errMsg.innerText = data.error || "Bir hata oluştu.";
+                if (res.status === 503 || (data.error && data.error.includes('Veritabanı bağlantısı yok'))) {
+                    // Fallback to offline guest mode
+                    authToken = 'offline_guest_token';
+                    State.p1Name = userInp.value;
+                    State.p2Name = "Misafir";
+                    authScreen.classList.add('hidden');
+                    startScreen.classList.remove('hidden'); // Show start screen for guest
+                    State.coins = 0; // Guests start with no coins
+                    State.unlockedItems = ['classic_ball', 'classic_jersey'];
+                    State.equippedBallSkin = 'classic_ball';
+                    State.equippedJersey = 'classic_jersey';
+                    updateCoinDisplay();
+                } else {
+                    errMsg.innerText = data.error || 'Kayıt başarısız.';
+                }
             }
         } catch (e) {
             errMsg.innerText = "Sunucuya bağlanılamadı.";
@@ -1676,6 +1722,9 @@ function initAuthUI() {
     if (playOfflineBtn) playOfflineBtn.addEventListener('click', () => {
         authScreen.classList.add('hidden');
         startScreen.classList.remove('hidden');
+        authToken = 'offline_guest_token';
+        State.p1Name = 'Misafir_' + Math.floor(Math.random() * 9999);
+        State.p2Name = 'Misafir';
         State.coins = 0;
         State.unlockedItems = ['classic_ball', 'classic_jersey'];
         State.equippedBallSkin = 'classic_ball';
@@ -1947,8 +1996,14 @@ async function initLobbyBrowser() {
             const res = await fetch(`/api/lobbies/${id}`);
             if (!res.ok) { alert('Lobi bulunamadı veya kapandı.'); return; }
             const lobby = await res.json();
+
+            // Ensure PeerJS is initialized before joining
+            NetworkManager.init();
+
             // Fill the peer join input and click join
-            screen.classList.add('hidden');
+            const lobbiesScreen = document.getElementById('lobbiesScreen');
+            if (lobbiesScreen) lobbiesScreen.classList.add('hidden');
+
             const onlineMenu = document.getElementById('onlineMenu');
             onlineMenu.classList.remove('hidden');
             startScreen.classList.add('hidden');
@@ -1960,6 +2015,28 @@ async function initLobbyBrowser() {
         } catch (e) {
             alert('Lobiye katılınamadı.');
         }
+    }
+
+    // ---- Privacy toggle in create modal ----
+    const pubBtn = document.getElementById('lobbyPublicBtn');
+    const privBtn = document.getElementById('lobbyPrivateBtn');
+    if (pubBtn && privBtn) {
+        pubBtn.addEventListener('click', () => {
+            pubBtn.classList.add('active');
+            pubBtn.style.background = '#27ae60';
+            pubBtn.style.borderColor = '#27ae60';
+            privBtn.classList.remove('active');
+            privBtn.style.background = '#2c3e50';
+            privBtn.style.borderColor = '#666';
+        });
+        privBtn.addEventListener('click', () => {
+            privBtn.classList.add('active');
+            privBtn.style.background = '#e74c3c';
+            privBtn.style.borderColor = '#e74c3c';
+            pubBtn.classList.remove('active');
+            pubBtn.style.background = '#2c3e50';
+            pubBtn.style.borderColor = '#666';
+        });
     }
 
     // ---- Open create modal ----
@@ -1974,8 +2051,12 @@ async function initLobbyBrowser() {
     // ---- Create lobby ----
     if (createConfirmBtn) createConfirmBtn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
+        const isPrivate = document.getElementById('lobbyPrivateBtn') && document.getElementById('lobbyPrivateBtn').classList.contains('active');
+
         if (!name) { errEl.innerText = 'Lütfen bir lobi adı girin.'; return; }
-        if (!authToken) { errEl.innerText = 'Lobi açmak için giriş yapmanız gerekiyor.'; return; }
+        // For offline fallback, they still have offline_guest_token, but if they bypassed it completely, still allow them.
+        if (!authToken) authToken = 'offline_guest_token';
+
 
         // First we need a PeerID. Open the online menu and get a peer, register once we have it.
         errEl.innerText = 'Oda oluşturuluyor...';
@@ -1986,8 +2067,9 @@ async function initLobbyBrowser() {
         // Open the regular online menu (triggers peer creation)
         const onlineMenu = document.getElementById('onlineMenu');
         onlineMenu.classList.remove('hidden');
+        NetworkManager.init();
 
-        // Click host button to generate a peer
+        // Click host button to set role and ready up the lobby UI
         const hostBtn = document.getElementById('hostBtn');
         if (hostBtn) hostBtn.click();
 
