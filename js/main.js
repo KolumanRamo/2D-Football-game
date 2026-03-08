@@ -1234,22 +1234,18 @@ function updateLobbyUI() {
 
     let redCount = 0;
     let blueCount = 0;
-    let readyCount = 0;
 
     for (const [id, player] of Object.entries(State.lobby.players)) {
         const div = document.createElement('div');
         div.className = 'player-list-item';
-        const readyText = player.isReady ? '<span style="color: #2ecc71; font-size: 0.8rem;">[HAZIR]</span>' : '';
-        div.innerHTML = `<span>${player.name}</span> <span>${readyText} ${player.isHost ? '👑' : ''}</span>`;
+        div.innerHTML = `<span>${player.name}</span> <span>${player.isHost ? '👑' : ''}</span>`;
 
         if (player.team === 'red') {
             lobbyRedList.appendChild(div);
             redCount++;
-            if (player.isReady) readyCount++;
         } else if (player.team === 'blue') {
             lobbyBlueList.appendChild(div);
             blueCount++;
-            if (player.isReady) readyCount++;
         } else {
             lobbySpecList.appendChild(div);
         }
@@ -1259,9 +1255,8 @@ function updateLobbyUI() {
         const startBtn = document.getElementById('lobbyStartBtn');
         if (startBtn) {
             startBtn.style.display = 'block';
-            // Start only if at least 1v1 AND everyone in a team is ready.
-            const totalPlayersInTeams = redCount + blueCount;
-            startBtn.disabled = !(redCount >= 1 && blueCount >= 1 && readyCount === totalPlayersInTeams);
+            // Start only if at least 1v1
+            startBtn.disabled = !(redCount >= 1 && blueCount >= 1);
             startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
         }
 
@@ -1387,21 +1382,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show/Hide Logout Button and bind event
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        const cachedToken = localStorage.getItem('authToken');
-        if (cachedToken && cachedToken !== 'offline_guest_token') {
-            logoutBtn.style.display = 'block';
-            logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('username');
-                State.player1Name = 'Oyuncu 1';
-                State.player2Name = 'Oyuncu 2';
-                authToken = null;
-                alert('Çıkış yapıldı.');
-                window.location.reload();
-            });
-        } else {
-            logoutBtn.style.display = 'none';
-        }
+        logoutBtn.style.display = 'block';
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('arcadeFootball_token');
+            localStorage.removeItem('username');
+            State.p1Name = 'Oyuncu 1';
+            State.p2Name = 'Oyuncu 2';
+            authToken = null;
+            window.location.reload();
+        });
     }
 
     // Online UI Listeners
