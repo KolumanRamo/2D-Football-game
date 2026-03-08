@@ -1473,7 +1473,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (lobbyLeaveBtn) {
         lobbyLeaveBtn.addEventListener('click', () => {
-            location.reload();
+            if (State.networkRole === 'host' && State.peerId) {
+                let token = localStorage.getItem('authToken') || 'offline_guest_token';
+                fetch('/api/lobbies/delete', {
+                    method: 'POST',
+                    keepalive: true,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ hostPeerId: State.peerId })
+                }).catch(e => console.error(e));
+            }
+            // Add a tiny delay to ensure fetch fires before browser teardown
+            setTimeout(() => { location.reload(); }, 150);
         });
     }
 
@@ -2110,5 +2120,29 @@ window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('lobby')) {
         // Lobby join will be handled after auth in initLobbyBrowser
+    }
+});
+
+// ---- Auto-cleanup Lobby on close/refresh ----
+window.addEventListener('unload', () => {
+    if (State.networkRole === 'host' && State.peerId) {
+        // Use sendBeacon for reliable delivery during unload to remove ghost lobbies
+        const url = '/api/lobbies/delete';
+        const data = JSON.stringify({ hostPeerId: State.peerId });
+        const blob = new Blob([data], { type: 'application/json' });
+
+        let token = localStorage.getItem('authToken') || 'offline_guest_token';
+        // sendBeacon doesn't support Authorization headers easily without a Blob encoded URL, 
+        // so we'll just allow the server to blindly delete if the hostPeerId matches a lobby they own.
+        // Actually, let's use fetch with keepalive which handles headers properly.
+        fetch(url, {
+            method: 'POST',
+            keepalive: true,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: data
+        }).catch(e => console.error('Cleanup failed', e));
     }
 });

@@ -233,6 +233,25 @@ app.post('/api/lobbies/create', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Delete a lobby
+app.post('/api/lobbies/delete', authenticateToken, async (req, res) => {
+    try {
+        const { hostPeerId } = req.body;
+        if (!hostPeerId) return res.status(400).json({ error: 'hostPeerId required.' });
+
+        if (!isDbConnected) {
+            // Memory fallback cleanup
+            for (let i = fallbackLobbies.length - 1; i >= 0; i--) {
+                if (fallbackLobbies[i].hostPeerId === hostPeerId) fallbackLobbies.splice(i, 1);
+            }
+            return res.json({ success: true });
+        }
+
+        await Lobby.deleteMany({ hostPeerId });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // List public lobbies (only non-expired)
 app.get('/api/lobbies', async (req, res) => {
     console.log('[API] Get Lobbies requested from:', req.ip);
