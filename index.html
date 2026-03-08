@@ -88,15 +88,20 @@
 
         <!-- Start Screen Overlay -->
         <div id="startScreen" class="overlay hidden">
-            <div class="language-select" style="position: absolute; top: 10px; right: 10px;">
-                <select id="languageSelect" style="padding: 5px; font-weight: bold;">
-                    <option value="tr">🇹🇷 Türkçe</option>
-                    <option value="en">🇬🇧 English</option>
-                    <option value="de">🇩🇪 Deutsch</option>
-                    <option value="es">🇪🇸 Español</option>
-                    <option value="sv">🇸🇪 Svenska</option>
-                    <option value="ru">🇷🇺 Русский</option>
-                </select>
+            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; align-items: center;">
+                <button id="logoutBtn"
+                    style="background: #c0392b; padding: 5px 15px; font-size: 0.9rem; border: 2px solid #e74c3c; border-radius: 5px; font-weight: bold; cursor: pointer; color: white;">Çıkış
+                    Yap</button>
+                <div class="language-select">
+                    <select id="languageSelect" style="padding: 5px; font-weight: bold;">
+                        <option value="tr">🇹🇷 Türkçe</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="sv">🇸🇪 Svenska</option>
+                        <option value="ru">🇷🇺 Русский</option>
+                    </select>
+                </div>
             </div>
 
             <h1 data-i18n="game_title">2D Arcade Futbol</h1>
@@ -325,15 +330,19 @@
                             </select>
                         </div>
                         <div style="font-size: 0.8rem; color: #aaa; text-align: center; margin-top: 5px;">Sadece Kurucu
-                                                    <div class="input-group" style="margin: 0; text-align: left;">
-                            <label style="font-size: 0.9rem; color: #ecf0f1;">Oyun Modu:</label>
-                            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
-                                <label style="color:#ff4757;font-size:0.85rem;"><input type="checkbox" id="lobbyChaosMode"> 🌀 Kaos Modu</label>
-                                <label style="color:#e67e22;font-size:0.85rem;"><input type="checkbox" id="lobbyBombMode"> 💣 Bomba Modu</label>
-                                <label style="color:#f1c40f;font-size:0.85rem;"><input type="checkbox" id="lobbySuddenDeath"> 👑 Altın Gol</label>
+                            <div class="input-group" style="margin: 0; text-align: left;">
+                                <label style="font-size: 0.9rem; color: #ecf0f1;">Oyun Modu:</label>
+                                <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+                                    <label style="color:#ff4757;font-size:0.85rem;"><input type="checkbox"
+                                            id="lobbyChaosMode"> 🌀 Kaos Modu</label>
+                                    <label style="color:#e67e22;font-size:0.85rem;"><input type="checkbox"
+                                            id="lobbyBombMode"> 💣 Bomba Modu</label>
+                                    <label style="color:#f1c40f;font-size:0.85rem;"><input type="checkbox"
+                                            id="lobbySuddenDeath"> 👑 Altın Gol</label>
+                                </div>
                             </div>
+                            değiştirebilir
                         </div>
-                        değiştirebilir</div>
                     </div>
                     <button id="lobbyStartBtn"
                         style="background: #2ecc71; padding: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; border-radius: 5px; cursor: pointer;">▶
@@ -422,9 +431,10 @@
 
             <button id="closeShopBtn" class="secondary-btn" style="width: 100%; margin-top: 20px;">KAPAT</button>
         </div>
-    
+
         <!-- Lobbies Screen Overlay -->
-        <div id="lobbiesScreen" class="overlay hidden" style="background: linear-gradient(135deg,#1a1a2e,#16213e);width:95%;max-width:900px;border-radius:16px;border:2px solid #8e44ad;padding:30px;overflow-y:auto;max-height:90vh;">
+        <div id="lobbiesScreen" class="overlay hidden"
+            style="background: linear-gradient(135deg,#1a1a2e,#16213e);width:95%;max-width:900px;border-radius:16px;border:2px solid #8e44ad;padding:30px;overflow-y:auto;max-height:90vh;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                 <h1 style="color:#8e44ad;margin:0;font-size:2rem;">🏟️ LOBİLER</h1>
                 <div style="display:flex;gap:10px;">
@@ -433,31 +443,39 @@
                     <button id="closeLobbyBrowserBtn" class="secondary-btn" style="padding:8px 14px;">✕</button>
                 </div>
             </div>
-            
-            <div style="display:flex;gap:10px;align-items:center;margin-bottom:18px;background:rgba(255,255,255,0.05);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">
+
+            <div
+                style="display:flex;gap:10px;align-items:center;margin-bottom:18px;background:rgba(255,255,255,0.05);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">
                 <div style="flex:1;">
                     <div style="font-weight:bold;color:white;margin-bottom:6px;">🔗 Kod ile Katıl</div>
                     <div style="display:flex;gap:8px;">
                         <input type="text" id="directJoinInput" placeholder="Peer ID veya Lobi Kodu gir..."
                             style="flex:1;padding:8px;border-radius:6px;border:none;background:#2c3e50;color:white;font-size:0.9rem;">
-                        <button id="directJoinBtn" style="background:#27ae60;padding:8px 16px;border-radius:6px;border:none;color:white;font-weight:bold;cursor:pointer;">KATIL</button>
+                        <button id="directJoinBtn"
+                            style="background:#27ae60;padding:8px 16px;border-radius:6px;border:none;color:white;font-weight:bold;cursor:pointer;">KATIL</button>
                     </div>
                 </div>
-            </div>            <div id="lobbyListContainer" style="min-height:200px;">
+            </div>
+            <div id="lobbyListContainer" style="min-height:200px;">
                 <div style="color:#aaa;text-align:center;padding:40px;">Lobiler yükleniyor...</div>
             </div>
         </div>
 
         <!-- Lobby Create Modal -->
-        <div id="lobbyCreateModal" class="overlay hidden" style="background:rgba(0,0,0,0.85);width:90%;max-width:480px;border-radius:14px;border:2px solid #8e44ad;padding:30px;">
+        <div id="lobbyCreateModal" class="overlay hidden"
+            style="background:rgba(0,0,0,0.85);width:90%;max-width:480px;border-radius:14px;border:2px solid #8e44ad;padding:30px;">
             <h2 style="color:#8e44ad;margin-bottom:20px;">🏟️ Lobi Oluştur</h2>
             <label style="display:block;margin-bottom:8px;color:#ccc;">Lobi Adı:</label>
             <input type="text" id="lobbyNameInput" placeholder="Örn: Ramo'nun Maçı" maxlength="30"
                 style="width:100%;padding:10px;border-radius:8px;border:none;background:#2c3e50;color:white;font-size:1rem;margin-bottom:18px;box-sizing:border-box;">
             <label style="display:block;margin-bottom:10px;color:#ccc;">Gizlilik:</label>
             <div style="display:flex;gap:12px;margin-bottom:24px;">
-                <button id="lobbyPublicBtn" class="lobby-privacy-btn active" data-val="public" style="flex:1;background:#27ae60;border-radius:8px;padding:10px;font-size:1rem;border:2px solid #27ae60;">🌐 Herkese Açık</button>
-                <button id="lobbyPrivateBtn" class="lobby-privacy-btn" data-val="private" style="flex:1;background:#2c3e50;border-radius:8px;padding:10px;font-size:1rem;border:2px solid #666;">🔒 Gizli</button>
+                <button id="lobbyPublicBtn" class="lobby-privacy-btn active" data-val="public"
+                    style="flex:1;background:#27ae60;border-radius:8px;padding:10px;font-size:1rem;border:2px solid #27ae60;">🌐
+                    Herkese Açık</button>
+                <button id="lobbyPrivateBtn" class="lobby-privacy-btn" data-val="private"
+                    style="flex:1;background:#2c3e50;border-radius:8px;padding:10px;font-size:1rem;border:2px solid #666;">🔒
+                    Gizli</button>
             </div>
             <div id="lobbyCreateError" style="color:#e74c3c;min-height:20px;margin-bottom:10px;"></div>
             <div style="display:flex;gap:10px;">

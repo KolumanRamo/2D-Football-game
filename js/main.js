@@ -1384,17 +1384,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (restartBtn) restartBtn.addEventListener('click', initGame);
     if (resumeBtn) resumeBtn.addEventListener('click', togglePause);
 
-    // Inject Logout Button if user is logged in
-    const cachedToken = localStorage.getItem('authToken');
-    if (cachedToken && cachedToken !== 'offline_guest_token') {
-        const startScreenEl = document.getElementById('startScreen');
-        if (startScreenEl) {
-            const logoutBtn = document.createElement('button');
-            logoutBtn.id = 'logoutBtn';
-            logoutBtn.innerText = '🚪 Çıkış Yap';
-            logoutBtn.style.cssText = 'position: absolute; top: 10px; left: 10px; background: #c0392b; padding: 8px 15px; font-size: 0.9rem; border: 2px solid #e74c3c; border-radius: 5px; font-weight: bold; cursor: pointer; color: white;';
-            startScreenEl.appendChild(logoutBtn);
-
+    // Show/Hide Logout Button and bind event
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        const cachedToken = localStorage.getItem('authToken');
+        if (cachedToken && cachedToken !== 'offline_guest_token') {
+            logoutBtn.style.display = 'block';
             logoutBtn.addEventListener('click', () => {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('username');
@@ -1404,6 +1399,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Çıkış yapıldı.');
                 window.location.reload();
             });
+        } else {
+            logoutBtn.style.display = 'none';
         }
     }
 
@@ -2126,23 +2123,11 @@ window.addEventListener('DOMContentLoaded', () => {
 // ---- Auto-cleanup Lobby on close/refresh ----
 window.addEventListener('unload', () => {
     if (State.networkRole === 'host' && State.peerId) {
-        // Use sendBeacon for reliable delivery during unload to remove ghost lobbies
-        const url = '/api/lobbies/delete';
+        let token = localStorage.getItem('authToken') || 'offline_guest_token';
+        const url = `/api/lobbies/delete?token=${encodeURIComponent(token)}`;
         const data = JSON.stringify({ hostPeerId: State.peerId });
         const blob = new Blob([data], { type: 'application/json' });
 
-        let token = localStorage.getItem('authToken') || 'offline_guest_token';
-        // sendBeacon doesn't support Authorization headers easily without a Blob encoded URL, 
-        // so we'll just allow the server to blindly delete if the hostPeerId matches a lobby they own.
-        // Actually, let's use fetch with keepalive which handles headers properly.
-        fetch(url, {
-            method: 'POST',
-            keepalive: true,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: data
-        }).catch(e => console.error('Cleanup failed', e));
+        navigator.sendBeacon(url, blob);
     }
 });

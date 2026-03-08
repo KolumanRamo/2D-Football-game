@@ -126,7 +126,12 @@ app.post('/api/login', async (req, res) => {
 // Middleware to verify JWT token
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // "Bearer TOKEN"
+    let token = authHeader && authHeader.split(' ')[1]; // "Bearer TOKEN"
+
+    // Fallback to query param for sendBeacon requests which can't set headers easily
+    if (!token && req.query.token) {
+        token = req.query.token;
+    }
 
     if (!token) return res.status(401).json({ error: 'Yetkisiz erişim.' });
 
