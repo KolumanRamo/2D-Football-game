@@ -1331,6 +1331,7 @@ function updateLobbyUI() {
 
 window.addEventListener('lobbyStateUpdated', () => {
     updateLobbyUI();
+    updateLobbyInventory();
 });
 
 window.addEventListener('lobbyActionReceived', (e) => {
@@ -1340,14 +1341,24 @@ window.addEventListener('lobbyActionReceived', (e) => {
     if (action.action === 'join_team') {
         if (State.lobby.players[action.peerId]) {
             State.lobby.players[action.peerId].team = action.team;
+            if (action.equippedJersey) State.lobby.players[action.peerId].equippedJersey = action.equippedJersey;
         } else {
-            State.lobby.players[action.peerId] = { name: action.name, team: action.team, isHost: false, isReady: false };
+            State.lobby.players[action.peerId] = { name: action.name, team: action.team, isHost: false, isReady: false, equippedJersey: action.equippedJersey || 'classic_jersey' };
         }
         NetworkManager.sendLobbyState(State.lobby);
         updateLobbyUI();
     } else if (action.action === 'toggle_ready') {
         if (State.lobby.players[action.peerId]) {
             State.lobby.players[action.peerId].isReady = action.isReady;
+        }
+        NetworkManager.sendLobbyState(State.lobby);
+        updateLobbyUI();
+    } else if (action.action === 'update_cosmetic') {
+        // A client changed their jersey; store it and broadcast to all
+        if (State.lobby.players[action.peerId]) {
+            State.lobby.players[action.peerId].equippedJersey = action.equippedJersey;
+        } else {
+            State.lobby.players[action.peerId] = { name: action.name, team: 'spec', isHost: false, equippedJersey: action.equippedJersey };
         }
         NetworkManager.sendLobbyState(State.lobby);
         updateLobbyUI();
@@ -1414,20 +1425,23 @@ window.addEventListener('networkReady', () => {
     }
 
     if (State.networkRole === 'host') {
-        State.lobby.players[State.peerId] = { name: myName, team: 'red', isHost: true };
+        State.lobby.players[State.peerId] = { name: myName, team: 'red', isHost: true, equippedJersey: State.equippedJersey };
 
         State.lobby.settings = {
             duration: document.getElementById('lobbyDuration').value,
             goalLimit: document.getElementById('lobbyGoalLimit').value,
             weather: document.getElementById('lobbyWeather').value,
-            ballType: document.getElementById('lobbyBallType').value
+            ballType: document.getElementById('lobbyBallType').value,
+            ballSkin: State.equippedBallSkin
         };
 
         NetworkManager.sendLobbyState(State.lobby);
         updateLobbyUI();
+        updateLobbyInventory();
     } else {
         // Join as spectator to start
-        NetworkManager.sendLobbyAction({ action: 'join_team', peerId: State.peerId, name: myName, team: 'spec' });
+        NetworkManager.sendLobbyAction({ action: 'join_team', peerId: State.peerId, name: myName, team: 'spec', equippedJersey: State.equippedJersey });
+        updateLobbyInventory();
     }
 });
 
@@ -1998,6 +2012,94 @@ function initShopUI() {
             });
         });
     }
+}
+
+// === LOBBY INVENTORY ===
+const LOBBY_JERSEY_SKINS = [
+    { id: 'classic_jersey', name: 'Klasik', color: '#e74c3c', emoji: '🔴' },
+    { id: 'galaxy', name: 'Galaksi', color: '#9b59b6', emoji: '🌌' },
+    { id: 'emerald', name: 'Zümrüt', color: '#27ae60', emoji: '💚' },
+    { id: 'electric', name: 'Elektrik', color: '#0abde3', emoji: '⚡' },
+    { id: 'sunset', name: 'Gün Batımı', color: '#f39c12', emoji: '🌅' },
+    { id: 'gold_king', name: 'Altın Kral', color: '#f1c40f', emoji: '👑' },
+    { id: 'dark_knight', name: 'Karanlık', color: '#5d6d7e', emoji: '🖤' },
+];
+
+const LOBBY_BALL_SKINS = [
+    { id: 'classic_ball', name: 'Klasik', color: '#cccccc', emoji: '⚽' },
+    { id: 'neon_ball', name: 'Neon', color: '#2ecc71', emoji: '💚' },
+    { id: 'fire_ball', name: 'Alev', color: '#e67e22', emoji: '🔥' },
+    { id: 'electric_ball', name: 'Elektrik', color: '#00d2d3', emoji: '⚡' },
+    { id: 'gold_ball', name: 'Altın', color: '#f1c40f', emoji: '👑' },
+    { id: 'dark_ball', name: 'Karanlık', color: '#8e44ad', emoji: '🌑' },
+];
+
+function updateLobbyInventory() {
+    const container = document.getElementById('lobbyInventoryList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const owned = State.unlockedItems || ['classic_jersey', 'classic_ball'];
+    const isHost = State.networkRole === 'host';
+
+    // Jersey Section
+    const jHeader = document.createElement('div');
+    jHeader.style.cssText = 'font-size:0.7rem;color:#aaa;width:100%;margin-bottom:4px;font-weight:bold;';
+    jHeader.innerText = '👕 FORMA (Seç & Kuşan)';
+    container.appendChild(jHeader);
+
+    const jerseyRow = document.createElement('div');
+    jerseyRow.style.cssText = 'display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:10px;width:100%;';
+    LOBBY_JERSEY_SKINS.filter(j => owned.includes(j.id)).forEach(jersey => {
+        const isEq = State.equippedJersey === jersey.id;
+        const btn = document.createElement('button');
+        btn.title = jersey.name;
+        btn.style.cssText = `width:40px;height:40px;border-radius:8px;border:3px solid ${isEq ? '#fff' : 'rgba(255,255,255,0.2)'};background:${jersey.color};cursor:pointer;font-size:16px;flex-shrink:0;box-shadow:${isEq ? '0 0 10px ' + jersey.color : 'none'};transition:all 0.15s;`;
+        btn.innerText = jersey.emoji;
+        btn.addEventListener('click', () => {
+            State.equippedJersey = jersey.id;
+            saveMetagameData();
+            updateLobbyInventory();
+            const myName = localStorage.getItem('username') || State.p1Name;
+            if (isHost) {
+                if (State.lobby.players[State.peerId]) State.lobby.players[State.peerId].equippedJersey = jersey.id;
+                NetworkManager.sendLobbyState(State.lobby);
+            } else {
+                NetworkManager.sendLobbyAction({ action: 'update_cosmetic', peerId: State.peerId, name: myName, equippedJersey: jersey.id });
+            }
+        });
+        jerseyRow.appendChild(btn);
+    });
+    container.appendChild(jerseyRow);
+
+    // Ball Section (Host-only)
+    const bHeader = document.createElement('div');
+    bHeader.style.cssText = 'font-size:0.7rem;color:#aaa;width:100%;margin-bottom:4px;font-weight:bold;';
+    bHeader.innerText = '⚽ TOP SKINI ' + (isHost ? '(Seç & Uygula)' : '(Sadece Kurucu)');
+    container.appendChild(bHeader);
+
+    const ballRow = document.createElement('div');
+    ballRow.style.cssText = 'display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;width:100%;';
+    LOBBY_BALL_SKINS.filter(b => owned.includes(b.id)).forEach(ball => {
+        const isEq = State.equippedBallSkin === ball.id;
+        const btn = document.createElement('button');
+        btn.title = ball.name;
+        btn.disabled = !isHost;
+        btn.style.cssText = `width:40px;height:40px;border-radius:50%;border:3px solid ${isEq ? '#fff' : 'rgba(255,255,255,0.2)'};background:${ball.color};cursor:${isHost ? 'pointer' : 'not-allowed'};font-size:16px;flex-shrink:0;opacity:${isHost ? 1 : 0.45};box-shadow:${isEq ? '0 0 10px ' + ball.color : 'none'};transition:all 0.15s;`;
+        btn.innerText = ball.emoji;
+        if (isHost) {
+            btn.addEventListener('click', () => {
+                State.equippedBallSkin = ball.id;
+                saveMetagameData();
+                updateLobbyInventory();
+                if (!State.lobby.settings) State.lobby.settings = {};
+                State.lobby.settings.ballSkin = ball.id;
+                NetworkManager.sendLobbyState(State.lobby);
+            });
+        }
+        ballRow.appendChild(btn);
+    });
+    container.appendChild(ballRow);
 }
 
 // ============================================================

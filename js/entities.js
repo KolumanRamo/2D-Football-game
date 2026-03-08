@@ -448,24 +448,43 @@ export class Player extends Entity {
 
         const isBlue = (this.color === '#3498db');
 
-        // Jersey skin system: player1 (red) gets the equipped skin, player2 stays default blue
+        // Jersey skin system: resolve jersey based on own equip or opponent's from lobby state
         let jerseyColor, jerseyHighlight, sockColor, shortColor;
-        if (!isBlue && typeof State !== 'undefined') {
-            const jerseyMap = {
-                'classic_jersey': { base: '#c0392b', hi: '#e74c3c', sock: '#922b21', short: '#641e16' },
-                'galaxy': { base: '#6c3483', hi: '#9b59b6', sock: '#7d3c98', short: '#4a235a' },
-                'emerald': { base: '#1e8449', hi: '#27ae60', sock: '#196f3d', short: '#0e5c33' },
-                'electric': { base: '#0a7a9a', hi: '#0abde3', sock: '#0e6e8a', short: '#095f77' },
-                'sunset': { base: '#c0392b', hi: '#f39c12', sock: '#a04000', short: '#784212' },
-                'gold_king': { base: '#b7950b', hi: '#f1c40f', sock: '#9a7d0a', short: '#7d6608' },
-                'dark_knight': { base: '#1c2833', hi: '#5d6d7e', sock: '#1a252f', short: '#17202a' },
-            };
-            const skin = jerseyMap[State.equippedJersey] || jerseyMap['classic_jersey'];
+        const jerseyMap = {
+            'classic_jersey': { base: '#c0392b', hi: '#e74c3c', sock: '#922b21', short: '#641e16' },
+            'galaxy': { base: '#6c3483', hi: '#9b59b6', sock: '#7d3c98', short: '#4a235a' },
+            'emerald': { base: '#1e8449', hi: '#27ae60', sock: '#196f3d', short: '#0e5c33' },
+            'electric': { base: '#0a7a9a', hi: '#0abde3', sock: '#0e6e8a', short: '#095f77' },
+            'sunset': { base: '#c0392b', hi: '#f39c12', sock: '#a04000', short: '#784212' },
+            'gold_king': { base: '#b7950b', hi: '#f1c40f', sock: '#9a7d0a', short: '#7d6608' },
+            'dark_knight': { base: '#1c2833', hi: '#5d6d7e', sock: '#1a252f', short: '#17202a' },
+        };
+
+        let resolvedJerseyId = null;
+        if (typeof State !== 'undefined') {
+            if (State.isOnline && State.lobby && State.lobby.players) {
+                const teamStr = isBlue ? 'blue' : 'red';
+                for (const pid in State.lobby.players) {
+                    if (State.lobby.players[pid].team === teamStr && State.lobby.players[pid].equippedJersey) {
+                        resolvedJerseyId = State.lobby.players[pid].equippedJersey;
+                        break;
+                    }
+                }
+            }
+            // Fallback to own local equip for offline / when not found in lobby
+            if (!resolvedJerseyId && !isBlue) {
+                resolvedJerseyId = State.equippedJersey;
+            }
+        }
+
+        if (resolvedJerseyId && jerseyMap[resolvedJerseyId]) {
+            const skin = jerseyMap[resolvedJerseyId];
             jerseyColor = skin.base;
             jerseyHighlight = skin.hi;
             sockColor = skin.sock;
             shortColor = skin.short;
         } else {
+            // Default team colors
             jerseyColor = isBlue ? '#1a6fc4' : '#c0392b';
             jerseyHighlight = isBlue ? '#3498db' : '#e74c3c';
             sockColor = isBlue ? '#2980b9' : '#922b21';
