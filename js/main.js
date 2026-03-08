@@ -1941,11 +1941,16 @@ async function initLobbyBrowser() {
     // Direct peer code join
     const directJoinBtn = document.getElementById('directJoinBtn');
     if (directJoinBtn) directJoinBtn.addEventListener('click', () => {
-        const code = (document.getElementById('directJoinInput') || {}).value?.trim();
+        const code = document.getElementById('directJoinInput').value.trim();
         if (!code) return;
-        screen.classList.add('hidden');
+
+        // Ensure PeerJS is initialized before joining
+        NetworkManager.init();
+
+        const lobbiesScreen = document.getElementById('lobbiesScreen');
+        if (lobbiesScreen) lobbiesScreen.classList.add('hidden');
         const onlineMenu = document.getElementById('onlineMenu');
-        onlineMenu.classList.remove('hidden');
+        if (onlineMenu) onlineMenu.classList.remove('hidden');
         startScreen.classList.add('hidden');
         const joinInput = document.getElementById('joinIdInput');
         if (joinInput) joinInput.value = code;

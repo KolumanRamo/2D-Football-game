@@ -261,10 +261,15 @@ app.post('/api/lobbies/delete', authenticateToken, async (req, res) => {
 app.get('/api/lobbies', async (req, res) => {
     console.log('[API] Get Lobbies requested from:', req.ip);
     try {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         if (!isDbConnected) {
-            return res.json(fallbackLobbies.filter(l => !l.isPrivate));
+            const activeLobbies = fallbackLobbies.filter(l => !l.isPrivate && new Date(l.createdAt) > fiveMinutesAgo);
+            return res.json(activeLobbies);
         }
-        const lobbies = await Lobby.find({ isPrivate: false }).sort({ createdAt: -1 }).limit(50);
+        const lobbies = await Lobby.find({
+            isPrivate: false,
+            createdAt: { $gt: fiveMinutesAgo }
+        }).sort({ createdAt: -1 }).limit(50);
         res.json(lobbies);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
