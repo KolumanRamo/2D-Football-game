@@ -135,7 +135,7 @@ function authenticateToken(req, res, next) {
 
     if (!token) return res.status(401).json({ error: 'Yetkisiz erişim.' });
 
-    if (!isDbConnected && token === 'offline_guest_token') {
+    if (token === 'offline_guest_token') {
         req.user = { userId: 'guest_' + Math.floor(Math.random() * 10000) };
         return next();
     }
@@ -260,6 +260,7 @@ app.post('/api/lobbies/delete', authenticateToken, async (req, res) => {
 // List public lobbies (only non-expired)
 app.get('/api/lobbies', async (req, res) => {
     console.log('[API] Get Lobbies requested from:', req.ip);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     try {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         if (!isDbConnected) {

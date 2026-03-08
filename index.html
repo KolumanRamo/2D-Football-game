@@ -11,9 +11,28 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         window.onerror = function (msg, url, line, col, error) {
-            alert("HATA: " + msg + "\nSatır: " + line + "\nSütun: " + col);
+            // First try alert
+            try { alert("HATA: " + msg + "\nSatır: " + line + "\nSütun: " + col); } catch (e) { }
+
+            // Then force a DOM overlay in case alerts are blocked
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(200,0,0,0.9); z-index:99999; color:white; padding:40px; font-size:24px; overflow:auto;";
+            errDiv.innerHTML = "<h1>Kritik Hata (Oyun Çöktü)</h1><p>" + msg + "</p><p>Satır: " + line + " Sütun: " + col + "</p><p>Lütfen bu hatayı geliştiriciye bildirin.</p>";
+
+            if (document.body) {
+                document.body.appendChild(errDiv);
+            } else {
+                window.addEventListener('load', () => document.body.appendChild(errDiv));
+            }
             return false;
         };
+
+        window.addEventListener('unhandledrejection', function (event) {
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(200,100,0,0.9); z-index:99999; color:white; padding:40px; font-size:24px; overflow:auto;";
+            errDiv.innerHTML = "<h1>Kritik Promise Hatası (Oyun Çöktü)</h1><p>" + (event.reason ? event.reason.message : 'Bilinmeyen Hata') + "</p><p>Lütfen bu hatayı geliştiriciye bildirin.</p>";
+            if (document.body) document.body.appendChild(errDiv);
+        });
     </script>
 </head>
 

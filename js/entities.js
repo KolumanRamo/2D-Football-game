@@ -832,9 +832,30 @@ export class Player extends Entity {
             ctx.strokeStyle = 'rgba(255,255,255,0.7)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            if (ctx.roundRect) ctx.roundRect(bx, by, 44, 8, 3); else ctx.strokeRect(bx, by, 44, 8);
             ctx.stroke();
         }
+
+        // ---- Player Name ----
+        ctx.save();
+        ctx.font = 'bold 16px "Fredoka One", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4;
+
+        let playerName = isBlue ? State.p2Name : State.p1Name;
+        if (State.isOnline && State.lobby && State.lobby.players) {
+            // Find the player in the lobby object that matches this team color
+            const teamStr = isBlue ? 'blue' : 'red';
+            for (const pid in State.lobby.players) {
+                if (State.lobby.players[pid].team === teamStr) {
+                    playerName = State.lobby.players[pid].name;
+                    break;
+                }
+            }
+        }
+        ctx.fillText(playerName, this.x, this.y - 48 - (this.isCharging ? 12 : 0));
+        ctx.restore();
     }
 }
 

@@ -11,6 +11,8 @@ import { applyWeatherPhysics, updateWeatherEffects, drawWeatherEffects } from '.
 import { NetworkManager } from './network.js';
 import { keys } from './input.js';
 
+const API_BASE = window.location.protocol === 'file:' || window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -66,14 +68,34 @@ function initGame() {
     State.p1Name = p1NameInput.value || t('default_red');
     State.p2Name = p2NameInput.value || t('default_blue');
     let durationMins = parseInt(durationInput.value) || 2;
+    State.winningScore = parseInt(goalLimitInput.value) || 5;
+
+    let isVsAiMode = document.querySelector('input[name="gameMode"]:checked').value === '1p';
+    State.hotPotatoMode = document.getElementById('hotPotatoMode') ? document.getElementById('hotPotatoMode').checked : false;
+    State.suddenDeathMode = document.getElementById('suddenDeathMode') ? document.getElementById('suddenDeathMode').checked : false;
+    let ballType = document.querySelector('input[name="ballType"]:checked') ? document.querySelector('input[name="ballType"]:checked').value : 'normal';
+    State.weatherCondition = document.querySelector('input[name="weatherType"]:checked') ? document.querySelector('input[name="weatherType"]:checked').value : 'sunny';
+    State.isChaosMode = document.getElementById('chaosMode') ? document.getElementById('chaosMode').checked : false;
+
+    // OVERRIDE WITH LOBBY SETTINGS IF ONLINE
+    if (State.isOnline && State.lobby && State.lobby.settings) {
+        const s = State.lobby.settings;
+        durationMins = parseInt(s.duration) || 2;
+        State.winningScore = parseInt(s.goalLimit) || 5;
+        State.weatherCondition = s.weather || 'sunny';
+        ballType = s.ballType || 'normal';
+        State.isChaosMode = !!s.chaosMode;
+        State.hotPotatoMode = !!s.bombMode;
+        State.suddenDeathMode = !!s.suddenDeath;
+        isVsAiMode = false; // No AI in online multiplayer
+    }
+
     if (durationMins > 10) durationMins = 10;
     if (durationMins < 1) durationMins = 1;
-    State.winningScore = parseInt(goalLimitInput.value) || 5;
 
     SoundManager.setSoundEnabled(soundToggle.checked);
 
-    const mode = document.querySelector('input[name="gameMode"]:checked').value;
-    if (mode === '1p') {
+    if (isVsAiMode) {
         State.isVsAI = true;
         player2.controls = 'ai';
         aiController.timer = 0;
@@ -82,17 +104,11 @@ function initGame() {
         player2.controls = 'arrows';
     }
 
-    // Chaos mode and other config evaluation moved below
-
-    const hotPotatoCheck = document.getElementById('hotPotatoMode');
-    State.hotPotatoMode = hotPotatoCheck ? hotPotatoCheck.checked : false;
     if (State.hotPotatoMode) {
         State.bombTimer = 900;
         State.lastTouchedBy = null;
     }
 
-    const suddenDeathCheck = document.getElementById('suddenDeathMode');
-    State.suddenDeathMode = suddenDeathCheck ? suddenDeathCheck.checked : false;
     if (State.suddenDeathMode) {
         State.winningScore = 1;
         durationMins = 99;
@@ -109,16 +125,9 @@ function initGame() {
         setTimeout(() => SoundManager.speak(t('start_btn')), 500);
     }
 
-    const ballTypeInput = document.querySelector('input[name="ballType"]:checked');
-    const ballType = ballTypeInput ? ballTypeInput.value : 'normal';
     ball.setType(ballType);
-
-    const weatherInput = document.querySelector('input[name="weatherType"]:checked');
-    State.weatherCondition = weatherInput ? weatherInput.value : 'sunny';
     applyWeatherPhysics();
 
-    const chaosCheck = document.getElementById('chaosMode');
-    State.isChaosMode = chaosCheck ? chaosCheck.checked : false;
     if (State.isChaosMode) {
         ChaosManager.trigger();
     } else {
@@ -1238,7 +1247,27 @@ function updateLobbyUI() {
     for (const [id, player] of Object.entries(State.lobby.players)) {
         const div = document.createElement('div');
         div.className = 'player-list-item';
+        // Add basic styling for drag/drop
+        div.style.padding = "5px";
+        div.style.margin = "5px 0";
+        div.style.background = "rgba(255,255,255,0.1)";
+        div.style.borderRadius = "3px";
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
         div.innerHTML = `<span>${player.name}</span> <span>${player.isHost ? '👑' : ''}</span>`;
+
+        // Setup Drag and Drop if HOST
+        if (State.networkRole === 'host') {
+            div.draggable = true;
+            div.style.cursor = "grab";
+            div.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', id);
+                div.style.opacity = '0.5';
+            });
+            div.addEventListener('dragend', () => {
+                div.style.opacity = '1';
+            });
+        }
 
         if (player.team === 'red') {
             lobbyRedList.appendChild(div);
@@ -1268,6 +1297,9 @@ function updateLobbyUI() {
         document.getElementById('lobbyGoalLimit').disabled = false;
         document.getElementById('lobbyWeather').disabled = false;
         document.getElementById('lobbyBallType').disabled = false;
+        if (document.getElementById('lobbyChaosMode')) document.getElementById('lobbyChaosMode').disabled = false;
+        if (document.getElementById('lobbyBombMode')) document.getElementById('lobbyBombMode').disabled = false;
+        if (document.getElementById('lobbySuddenDeath')) document.getElementById('lobbySuddenDeath').disabled = false;
     } else {
         const startBtn = document.getElementById('lobbyStartBtn');
         if (startBtn) startBtn.style.display = 'none';
@@ -1280,6 +1312,9 @@ function updateLobbyUI() {
         document.getElementById('lobbyGoalLimit').disabled = true;
         document.getElementById('lobbyWeather').disabled = true;
         document.getElementById('lobbyBallType').disabled = true;
+        if (document.getElementById('lobbyChaosMode')) document.getElementById('lobbyChaosMode').disabled = true;
+        if (document.getElementById('lobbyBombMode')) document.getElementById('lobbyBombMode').disabled = true;
+        if (document.getElementById('lobbySuddenDeath')) document.getElementById('lobbySuddenDeath').disabled = true;
 
         // Sync inputs
         if (State.lobby.settings) {
@@ -1287,6 +1322,9 @@ function updateLobbyUI() {
             document.getElementById('lobbyGoalLimit').value = State.lobby.settings.goalLimit;
             document.getElementById('lobbyWeather').value = State.lobby.settings.weather;
             document.getElementById('lobbyBallType').value = State.lobby.settings.ballType;
+            if (document.getElementById('lobbyChaosMode')) document.getElementById('lobbyChaosMode').checked = !!State.lobby.settings.chaosMode;
+            if (document.getElementById('lobbyBombMode')) document.getElementById('lobbyBombMode').checked = !!State.lobby.settings.bombMode;
+            if (document.getElementById('lobbySuddenDeath')) document.getElementById('lobbySuddenDeath').checked = !!State.lobby.settings.suddenDeath;
         }
     }
 }
@@ -1346,10 +1384,18 @@ window.addEventListener('networkReady', () => {
     if (lobbyMenu) lobbyMenu.classList.remove('hidden');
     startScreen.classList.add('hidden');
 
-    const myName = State.networkRole === 'host' ? document.getElementById('p1NameInput').value : document.getElementById('p2NameInput').value;
+    // Retrieve name correctly based on localStorage or p1 input (since p2 input is usually "Mavi")
+    let myName = localStorage.getItem('username') || document.getElementById('p1NameInput').value;
+    if (!myName || myName === t('default_red') || myName === t('default_blue') || myName === 'Kırmızı' || myName === 'Mavi') {
+        myName = State.networkRole === 'host' ? 'Host_' + Math.floor(Math.random() * 1000) : 'Misafir_' + Math.floor(Math.random() * 1000);
+        // if there is a valid player name in input 1 use it
+        if (document.getElementById('p1NameInput').value && document.getElementById('p1NameInput').value !== 'Kırmızı') {
+            myName = document.getElementById('p1NameInput').value;
+        }
+    }
 
     if (State.networkRole === 'host') {
-        State.lobby.players[State.peerId] = { name: myName || 'Host', team: 'red', isHost: true };
+        State.lobby.players[State.peerId] = { name: myName, team: 'red', isHost: true };
 
         State.lobby.settings = {
             duration: document.getElementById('lobbyDuration').value,
@@ -1362,7 +1408,7 @@ window.addEventListener('networkReady', () => {
         updateLobbyUI();
     } else {
         // Join as spectator to start
-        NetworkManager.sendLobbyAction({ action: 'join_team', peerId: State.peerId, name: myName || 'Oyuncu', team: 'spec' });
+        NetworkManager.sendLobbyAction({ action: 'join_team', peerId: State.peerId, name: myName, team: 'spec' });
     }
 });
 
@@ -1433,15 +1479,48 @@ document.addEventListener('DOMContentLoaded', () => {
     if (joinSpecBtn) joinSpecBtn.addEventListener('click', () => handleTeamJoin('spec'));
 
     function handleTeamJoin(team) {
-        const myName = State.networkRole === 'host' ? document.getElementById('p1NameInput').value : document.getElementById('p2NameInput').value;
+        let myName = localStorage.getItem('username') || document.getElementById('p1NameInput').value;
+        if (!myName || myName === 'Kırmızı' || myName === 'Mavi') {
+            myName = State.networkRole === 'host' ? 'Host_' + Math.floor(Math.random() * 1000) : 'Misafir_' + Math.floor(Math.random() * 1000);
+        }
+
         if (State.networkRole === 'host') {
-            State.lobby.players[State.peerId] = { name: myName || 'Host', team: team, isHost: true };
+            State.lobby.players[State.peerId] = { name: myName, team: team, isHost: true };
             NetworkManager.sendLobbyState(State.lobby);
             updateLobbyUI();
         } else {
-            NetworkManager.sendLobbyAction({ action: 'join_team', peerId: State.peerId, name: myName || 'Oyuncu', team: team });
+            NetworkManager.sendLobbyAction({ action: 'join_team', peerId: State.peerId, name: myName, team: team });
         }
     }
+
+    // Set up drag and drop zones for host
+    function setupDragZone(listElement, teamName) {
+        if (!listElement) return;
+        listElement.addEventListener('dragover', (e) => {
+            if (State.networkRole !== 'host') return;
+            e.preventDefault(); // Necessary to allow drop
+            listElement.style.background = "#2c3e50";
+        });
+        listElement.addEventListener('dragleave', (e) => {
+            if (State.networkRole !== 'host') return;
+            listElement.style.background = "#111";
+        });
+        listElement.addEventListener('drop', (e) => {
+            if (State.networkRole !== 'host') return;
+            e.preventDefault();
+            listElement.style.background = "#111";
+            const draggedPeerId = e.dataTransfer.getData('text/plain');
+            if (draggedPeerId && State.lobby.players[draggedPeerId]) {
+                State.lobby.players[draggedPeerId].team = teamName;
+                NetworkManager.sendLobbyState(State.lobby);
+                updateLobbyUI();
+            }
+        });
+    }
+
+    setupDragZone(lobbyRedList, 'red');
+    setupDragZone(lobbyBlueList, 'blue');
+    setupDragZone(lobbySpecList, 'spec');
 
     if (lobbyStartBtn) {
         lobbyStartBtn.addEventListener('click', () => {
@@ -1461,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lobbyLeaveBtn.addEventListener('click', () => {
             if (State.networkRole === 'host' && State.peerId) {
                 let token = localStorage.getItem('authToken') || 'offline_guest_token';
-                fetch('/api/lobbies/delete', {
+                fetch(API_BASE + '/api/lobbies/delete', {
                     method: 'POST',
                     keepalive: true,
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -1491,6 +1570,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     State.lobby.settings.goalLimit = document.getElementById('lobbyGoalLimit').value;
                     State.lobby.settings.weather = document.getElementById('lobbyWeather').value;
                     State.lobby.settings.ballType = document.getElementById('lobbyBallType').value;
+                    State.lobby.settings.chaosMode = document.getElementById('lobbyChaosMode') ? document.getElementById('lobbyChaosMode').checked : false;
+                    State.lobby.settings.bombMode = document.getElementById('lobbyBombMode') ? document.getElementById('lobbyBombMode').checked : false;
+                    State.lobby.settings.suddenDeath = document.getElementById('lobbySuddenDeath') ? document.getElementById('lobbySuddenDeath').checked : false;
                     NetworkManager.sendLobbyState(State.lobby);
                 }
             });
@@ -1667,7 +1749,7 @@ function initAuthUI() {
         const endpoint = isLogin ? '/api/login' : '/api/register';
 
         try {
-            const res = await fetch(endpoint, {
+            const res = await fetch(API_BASE + endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -1733,7 +1815,7 @@ async function loadMetagameData() {
     if (!authToken) return;
 
     try {
-        const res = await fetch('/api/me', {
+        const res = await fetch(API_BASE + '/api/me', {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (res.ok) {
@@ -1757,7 +1839,7 @@ async function saveMetagameData() {
     if (!authToken) return; // Offline mode, don't save
 
     try {
-        await fetch('/api/update', {
+        await fetch(API_BASE + '/api/update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1964,7 +2046,7 @@ async function initLobbyBrowser() {
     async function loadLobbyList() {
         listEl.innerHTML = '<div style="color:#aaa;text-align:center;padding:40px;">Yükleniyor...</div>';
         try {
-            const res = await fetch('/api/lobbies');
+            const res = await fetch(API_BASE + `/api/lobbies?t=${Date.now()}`);
             const lobbies = await res.json();
             if (!Array.isArray(lobbies) || lobbies.length === 0) {
                 listEl.innerHTML = '<div style="color:#888;text-align:center;padding:40px;font-size:1.1rem;">Şu an aktif lobi yok. İlk sen aç! 🚀</div>';
@@ -1994,7 +2076,7 @@ async function initLobbyBrowser() {
     // ---- Join lobby by ID (fetch hostPeerId, then connect) ----
     async function joinLobbyById(id) {
         try {
-            const res = await fetch(`/api/lobbies/${id}`);
+            const res = await fetch(API_BASE + `/api/lobbies/${id}`);
             if (!res.ok) { alert('Lobi bulunamadı veya kapandı.'); return; }
             const lobby = await res.json();
 
@@ -2084,13 +2166,13 @@ async function initLobbyBrowser() {
                 clearInterval(waitForPeer);
                 if (!peerId) return;
                 try {
-                    const reg = await fetch('/api/lobbies/create', {
+                    const reg = await fetch(API_BASE + '/api/lobbies/create', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                         body: JSON.stringify({ name, isPrivate, hostPeerId: peerId })
                     });
                     const data = await reg.json();
-                    if (data.id) {
+                    if (reg.ok && data.id) {
                         // Update room name display
                         const roomName = document.getElementById('lobbyRoomName');
                         if (roomName) roomName.innerText = `${isPrivate ? '🔒' : '🌐'} ${name}`;
@@ -2099,8 +2181,22 @@ async function initLobbyBrowser() {
                             const link = `${window.location.origin}/?lobby=${data.id}`;
                             alert(`Gizli lobiniz oluşturuldu!\n\nDavet linki:\n${link}\n\nBu linki arkadaşınızla paylaşın.`);
                         }
+                    } else {
+                        alert('Lobi oluşturulamadı: ' + (data.error || 'Bilinmeyen hata'));
+                        // Re-show main menu since it failed
+                        const onlineMenu = document.getElementById('onlineMenu');
+                        if (onlineMenu) onlineMenu.classList.add('hidden');
+                        const startScreen = document.getElementById('startScreen');
+                        if (startScreen) startScreen.classList.remove('hidden');
                     }
-                } catch (ex) { console.error('Lobby register error', ex); }
+                } catch (ex) {
+                    console.error('Lobby register error', ex);
+                    alert('Lobi oluşturulurken sunucuya ulaşılamadı. Sunucu kapalı olabilir.');
+                    const onlineMenu = document.getElementById('onlineMenu');
+                    if (onlineMenu) onlineMenu.classList.add('hidden');
+                    const startScreen = document.getElementById('startScreen');
+                    if (startScreen) startScreen.classList.remove('hidden');
+                }
             }
         }, 500);
     });
