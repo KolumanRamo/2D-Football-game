@@ -1824,6 +1824,10 @@ async function loadMetagameData() {
             State.unlockedItems = data.unlockedItems || ['classic_ball', 'classic_jersey'];
             State.equippedBallSkin = data.equippedBallSkin || 'classic_ball';
             State.equippedJersey = data.equippedJersey || 'classic_jersey';
+            if (data.username) {
+                State.p1Name = data.username;
+                localStorage.setItem('username', data.username);
+            }
             updateCoinDisplay();
         } else {
             // Token expired or invalid
