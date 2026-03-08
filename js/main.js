@@ -1354,6 +1354,25 @@ window.addEventListener('lobbyActionReceived', (e) => {
     }
 });
 
+window.addEventListener('networkReturnToLobby', () => {
+    // Mimic the main menu btn click to transition UI
+    if (document.getElementById('mainMenuBtn')) {
+        // Only trigger the rest of the UI shutdown, without re-sending the network action
+        const postMatchScreen = document.getElementById('postMatchScreen');
+        if (postMatchScreen) postMatchScreen.classList.add('hidden');
+        document.getElementById('pauseMenu').classList.add('hidden');
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        if (lobbyMenu) lobbyMenu.classList.remove('hidden');
+
+        State.gameRunning = false;
+        State.gamePaused = false;
+
+        ctx.clearRect(0, 0, Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT);
+        drawField();
+    }
+});
+
 window.addEventListener('networkStartGame', () => {
     // Apply settings
     if (document.getElementById('durationInput')) {
@@ -1593,6 +1612,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // If online, go back to lobby instead
             if (State.isOnline) {
+                if (State.networkRole === 'host') {
+                    NetworkManager.sendReturnToLobby();
+                }
+
                 startScreen.classList.add('hidden');
                 if (lobbyMenu) lobbyMenu.classList.remove('hidden');
 

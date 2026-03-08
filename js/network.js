@@ -105,6 +105,8 @@ export const NetworkManager = {
                 window.dispatchEvent(new CustomEvent('lobbyActionReceived', { detail: data }));
             } else if (data.type === 'start_game') {
                 window.dispatchEvent(new CustomEvent('networkStartGame'));
+            } else if (data.type === 'return_to_lobby') {
+                window.dispatchEvent(new CustomEvent('networkReturnToLobby'));
             } else if (data.type === 'chat_msg') {
                 // Anyone can receive chat
                 window.dispatchEvent(new CustomEvent('networkChat', { detail: data }));
@@ -151,6 +153,12 @@ export const NetworkManager = {
     sendStartGame() {
         if (this.conn && this.conn.open && State.networkRole === 'host') {
             this.conn.send({ type: 'start_game' });
+        }
+    },
+
+    sendReturnToLobby() {
+        if (this.conn && this.conn.open && State.networkRole === 'host') {
+            this.conn.send({ type: 'return_to_lobby' });
         }
     },
 
