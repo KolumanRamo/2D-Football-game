@@ -88,10 +88,12 @@
 
         <!-- Start Screen Overlay -->
         <div id="startScreen" class="overlay hidden">
+            <!-- Top Left: Logout Button -->
+            <button id="logoutBtn"
+                style="position: absolute; top: 10px; left: 10px; background: #e74c3c; padding: 10px 20px; font-size: 1rem; border: 2px solid #c0392b; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; box-shadow: 0 4px 0 #922b21; z-index: 100;">Çıkış
+                Yap</button>
+
             <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; align-items: center;">
-                <button id="logoutBtn"
-                    style="background: #c0392b; padding: 5px 15px; font-size: 0.9rem; border: 2px solid #e74c3c; border-radius: 5px; font-weight: bold; cursor: pointer; color: white;">Çıkış
-                    Yap</button>
                 <div class="language-select">
                     <select id="languageSelect" style="padding: 5px; font-weight: bold;">
                         <option value="tr">🇹🇷 Türkçe</option>
