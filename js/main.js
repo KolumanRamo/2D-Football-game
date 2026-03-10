@@ -1537,7 +1537,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (State.networkRole === 'host') {
-            State.lobby.players[State.peerId] = { name: myName, team: team, isHost: true };
+            State.lobby.players[State.peerId] = {
+                ...State.lobby.players[State.peerId],
+                name: myName,
+                team: team,
+                isHost: true,
+                equippedJersey: State.equippedJersey
+            };
             NetworkManager.sendLobbyState(State.lobby);
             updateLobbyUI();
         } else {
