@@ -1699,6 +1699,8 @@ document.addEventListener('DOMContentLoaded', () => {
         '4': 'Şanslıydın!'
     };
 
+    let lastChatTime = 0;
+
     document.addEventListener('keydown', (e) => {
         if (State.gameRunning && (e.key === 'Escape' || e.key === 'P' || e.key === 'p')) {
             togglePause();
@@ -1706,6 +1708,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (State.gameRunning && State.isOnline && CHAT_MESSAGES[e.key]) {
+            const now = Date.now();
+            if (now - lastChatTime < 3000) {
+                // Not enough time has passed.
+                return;
+            }
+            lastChatTime = now;
+
             const msgText = CHAT_MESSAGES[e.key];
             const me = State.lobby.players[State.peerId];
             if (!me) return;
