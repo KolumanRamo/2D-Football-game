@@ -1134,11 +1134,7 @@ function gameLoop(timestamp) {
 
     ctx.restore();
 
-    ctx.fillStyle = "white";
-    ctx.font = "14px Fredoka One";
-    ctx.textAlign = "center";
-    ctx.fillText(State.p1Name, player1.x, player1.y - 45);
-    ctx.fillText(State.p2Name, player2.x, player2.y - 45);
+    // The player names are drawn by player.draw() in entities.js
 
     // --- Networking Sync ---
     if (State.isOnline && State.networkRole === 'host') {
