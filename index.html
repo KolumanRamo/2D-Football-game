@@ -317,19 +317,10 @@
                 <div class="lobby-sidebar"
                     style="flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 200px;">
 
-                    <!-- New Inventory Panel -->
-                    <div class="lobby-inventory"
-                        style="background: #2c3e50; padding: 15px; border-radius: 5px; display: flex; flex-direction: column; gap: 10px;">
-                        <h3
-                            style="color: white; margin: 0; font-size: 1rem; text-align: center; border-bottom: 1px solid #34495e; padding-bottom: 5px;">
-                            Envanterim (Kuşan)</h3>
-                        <div id="lobbyInventoryList"
-                            style="display: flex; gap: 10px; overflow-x: auto; padding-top: 5px;">
-                            <!-- Owned items will be injected here via JS -->
-                            <div style="color: #aaa; font-size: 0.8rem; text-align: center; width: 100%;">Yükleniyor...
-                            </div>
-                        </div>
-                    </div>
+                    <!-- New Inventory Button -->
+                    <button id="lobbyOpenInventoryBtn"
+                        style="background: #f39c12; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 1rem; color: #fff; cursor: pointer; border: 2px solid #e67e22;">🎒
+                        BENİM ENVANTERİM</button>
 
                     <div class="lobby-settings"
                         style="background: #2c3e50; padding: 15px; border-radius: 5px; display: flex; flex-direction: column; gap: 10px;">
@@ -516,6 +507,24 @@
                 <button id="lobbyCreateConfirmBtn" style="flex:1;background:#8e44ad;">OLUŞTUR</button>
                 <button id="lobbyCreateCancelBtn" class="secondary-btn" style="flex:1;">İPTAL</button>
             </div>
+        </div>
+
+        <!-- Lobby Inventory Modal -->
+        <div id="lobbyInventoryModal" class="overlay hidden"
+            style="background:rgba(0,0,0,0.9);width:90%;max-width:500px;border-radius:15px;border:2px solid #f39c12;padding:25px;z-index: 1000;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="color: #f39c12; margin: 0;">🎒 Envanterim</h2>
+                <button id="closeLobbyInventoryBtn"
+                    style="background: transparent; border: none; font-size: 1.5rem; color: white; cursor: pointer;">✕</button>
+            </div>
+
+            <div id="lobbyInventoryList" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="color: #aaa; font-size: 0.8rem; text-align: center; width: 100%;">Yükleniyor...</div>
+            </div>
+
+            <button id="closeLobbyInventoryBottomBtn" class="secondary-btn"
+                style="width: 100%; margin-top: 25px;">KAPAT</button>
         </div>
     </div>
     <script type="module" src="js/main.js"></script>

@@ -1506,6 +1506,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const lobbyStartBtn = document.getElementById('lobbyStartBtn');
     const lobbyLeaveBtn = document.getElementById('lobbyLeaveBtn');
     const lobbyCopyIdBtn = document.getElementById('lobbyCopyIdBtn');
+    const lobbyOpenInventoryBtn = document.getElementById('lobbyOpenInventoryBtn');
+    const lobbyInventoryModal = document.getElementById('lobbyInventoryModal');
+    const closeLobbyInventoryBtn = document.getElementById('closeLobbyInventoryBtn');
+    const closeLobbyInventoryBottomBtn = document.getElementById('closeLobbyInventoryBottomBtn');
+
+    if (lobbyOpenInventoryBtn) {
+        lobbyOpenInventoryBtn.addEventListener('click', () => {
+            updateLobbyInventory(); // refresh items
+            if (lobbyInventoryModal) lobbyInventoryModal.classList.remove('hidden');
+        });
+    }
+
+    const closeInv = () => { if (lobbyInventoryModal) lobbyInventoryModal.classList.add('hidden'); };
+    if (closeLobbyInventoryBtn) closeLobbyInventoryBtn.addEventListener('click', closeInv);
+    if (closeLobbyInventoryBottomBtn) closeLobbyInventoryBottomBtn.addEventListener('click', closeInv);
 
     if (joinRedBtn) joinRedBtn.addEventListener('click', () => handleTeamJoin('red'));
     if (joinBlueBtn) joinBlueBtn.addEventListener('click', () => handleTeamJoin('blue'));
@@ -1798,6 +1813,7 @@ function initAuthUI() {
                 authToken = data.token;
                 localStorage.setItem('arcadeFootball_token', authToken);
                 State.p1Name = data.user.username;
+                localStorage.setItem('username', data.user.username);
                 State.p2Name = data.user.username + " (Misafir)";
                 State.coins = data.user.coins || 0;
                 State.unlockedItems = data.user.unlockedItems || ['classic_ball', 'classic_jersey'];
@@ -2048,17 +2064,17 @@ function updateLobbyInventory() {
 
     // Jersey Section
     const jHeader = document.createElement('div');
-    jHeader.style.cssText = 'font-size:0.7rem;color:#aaa;width:100%;margin-bottom:4px;font-weight:bold;';
+    jHeader.style.cssText = 'font-size:0.9rem;color:#f39c12;width:100%;margin-bottom:8px;font-weight:bold;';
     jHeader.innerText = '👕 FORMA (Seç & Kuşan)';
     container.appendChild(jHeader);
 
     const jerseyRow = document.createElement('div');
-    jerseyRow.style.cssText = 'display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:10px;width:100%;';
+    jerseyRow.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;padding-bottom:15px;width:100%;border-bottom:1px solid rgba(255,255,255,0.1);';
     LOBBY_JERSEY_SKINS.filter(j => owned.includes(j.id)).forEach(jersey => {
         const isEq = State.equippedJersey === jersey.id;
         const btn = document.createElement('button');
         btn.title = jersey.name;
-        btn.style.cssText = `width:40px;height:40px;border-radius:8px;border:3px solid ${isEq ? '#fff' : 'rgba(255,255,255,0.2)'};background:${jersey.color};cursor:pointer;font-size:16px;flex-shrink:0;box-shadow:${isEq ? '0 0 10px ' + jersey.color : 'none'};transition:all 0.15s;`;
+        btn.style.cssText = `width:50px;height:50px;border-radius:8px;border:3px solid ${isEq ? '#fff' : 'rgba(255,255,255,0.2)'};background:${jersey.color};cursor:pointer;font-size:20px;flex-shrink:0;box-shadow:${isEq ? '0 0 15px ' + jersey.color : 'none'};transition:all 0.15s;`;
         btn.innerText = jersey.emoji;
         btn.addEventListener('click', () => {
             State.equippedJersey = jersey.id;
@@ -2078,18 +2094,18 @@ function updateLobbyInventory() {
 
     // Ball Section (Host-only)
     const bHeader = document.createElement('div');
-    bHeader.style.cssText = 'font-size:0.7rem;color:#aaa;width:100%;margin-bottom:4px;font-weight:bold;';
-    bHeader.innerText = '⚽ TOP SKINI ' + (isHost ? '(Seç & Uygula)' : '(Sadece Kurucu)');
+    bHeader.style.cssText = 'font-size:0.9rem;color:#f39c12;width:100%;margin-bottom:8px;margin-top:10px;font-weight:bold;';
+    bHeader.innerText = '⚽ TOP SIKİNİ ' + (isHost ? '(Seç & Uygula)' : '(Sadece Kurucu Değiştirebilir)');
     container.appendChild(bHeader);
 
     const ballRow = document.createElement('div');
-    ballRow.style.cssText = 'display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;width:100%;';
+    ballRow.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;width:100%;';
     LOBBY_BALL_SKINS.filter(b => owned.includes(b.id)).forEach(ball => {
         const isEq = State.equippedBallSkin === ball.id;
         const btn = document.createElement('button');
         btn.title = ball.name;
         btn.disabled = !isHost;
-        btn.style.cssText = `width:40px;height:40px;border-radius:50%;border:3px solid ${isEq ? '#fff' : 'rgba(255,255,255,0.2)'};background:${ball.color};cursor:${isHost ? 'pointer' : 'not-allowed'};font-size:16px;flex-shrink:0;opacity:${isHost ? 1 : 0.45};box-shadow:${isEq ? '0 0 10px ' + ball.color : 'none'};transition:all 0.15s;`;
+        btn.style.cssText = `width:50px;height:50px;border-radius:50%;border:3px solid ${isEq ? '#fff' : 'rgba(255,255,255,0.2)'};background:${ball.color};cursor:${isHost ? 'pointer' : 'not-allowed'};font-size:20px;flex-shrink:0;opacity:${isHost ? 1 : 0.45};box-shadow:${isEq ? '0 0 15px ' + ball.color : 'none'};transition:all 0.15s;`;
         btn.innerText = ball.emoji;
         if (isHost) {
             btn.addEventListener('click', () => {
