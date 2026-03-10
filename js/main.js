@@ -2208,12 +2208,12 @@ async function initLobbyBrowser() {
 
     // ---- Load & render public lobby list ----
     async function loadLobbyList() {
-        listEl.innerHTML = '<div style="color:#aaa;text-align:center;padding:40px;">Yükleniyor...</div>';
+        listEl.innerHTML = `<div style="color:#aaa;text-align:center;padding:40px;">${t('loading_text')}</div>`;
         try {
             const res = await fetch(API_BASE + `/api/lobbies?t=${Date.now()}`);
             const lobbies = await res.json();
             if (!Array.isArray(lobbies) || lobbies.length === 0) {
-                listEl.innerHTML = '<div style="color:#888;text-align:center;padding:40px;font-size:1.1rem;">Şu an aktif lobi yok. İlk sen aç! 🚀</div>';
+                listEl.innerHTML = `<div style="color:#888;text-align:center;padding:40px;font-size:1.1rem;">${t('no_active_lobbies')}</div>`;
                 return;
             }
             listEl.innerHTML = '';
@@ -2225,7 +2225,7 @@ async function initLobbyBrowser() {
                         <div style="font-size:1.1rem;font-weight:bold;color:white;">${lobby.isPrivate ? '🔒' : '🌐'} ${lobby.name}</div>
                         <div style="font-size:0.8rem;color:#aaa;">ID: ${lobby.id}</div>
                     </div>
-                    <button class="join-lobby-btn" data-id="${lobby.id}" style="background:#8e44ad;padding:8px 18px;border-radius:8px;border:none;color:white;font-weight:bold;cursor:pointer;">KATIL</button>
+                    <button class="join-lobby-btn" data-id="${lobby.id}" style="background:#8e44ad;padding:8px 18px;border-radius:8px;border:none;color:white;font-weight:bold;cursor:pointer;">${t('direct_join_btn')}</button>
                 `;
                 listEl.appendChild(row);
             });
@@ -2233,7 +2233,7 @@ async function initLobbyBrowser() {
                 btn.addEventListener('click', () => joinLobbyById(btn.getAttribute('data-id')));
             });
         } catch (e) {
-            listEl.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:40px;">Lobiler yüklenemedi.</div>';
+            listEl.innerHTML = `<div style="color:#e74c3c;text-align:center;padding:40px;">${t('lobbies_failed')}</div>`;
         }
     }
 
@@ -2241,7 +2241,7 @@ async function initLobbyBrowser() {
     async function joinLobbyById(id) {
         try {
             const res = await fetch(API_BASE + `/api/lobbies/${id}`);
-            if (!res.ok) { alert('Lobi bulunamadı veya kapandı.'); return; }
+            if (!res.ok) { alert(t('lobby_not_found')); return; }
             const lobby = await res.json();
 
             // Ensure PeerJS is initialized before joining

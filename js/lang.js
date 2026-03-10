@@ -103,7 +103,10 @@ export const translations = {
         cancel_btn: "İPTAL",
         inventory_title: "🎒 Envanterim",
         loading_text: "Yükleniyor...",
-        connection_timeout: "Bağlantı zaman aşımına uğradı."
+        connection_timeout: "Bağlantı zaman aşımına uğradı.",
+        no_active_lobbies: "Şu an aktif lobi yok. İlk sen aç! 🚀",
+        lobbies_failed: "Lobiler yüklenemedi.",
+        lobby_not_found: "Lobi bulunamadı veya kapandı."
     },
     en: {
         game_title: "2D Arcade Soccer",
@@ -208,7 +211,10 @@ export const translations = {
         cancel_btn: "CANCEL",
         inventory_title: "🎒 My Inventory",
         loading_text: "Loading...",
-        connection_timeout: "Connection timed out."
+        connection_timeout: "Connection timed out.",
+        no_active_lobbies: "No active lobbies. Be the first to host! 🚀",
+        lobbies_failed: "Failed to load lobbies.",
+        lobby_not_found: "Lobby not found or closed."
     },
     de: {
         game_title: "2D Arcade Fußball",
@@ -306,7 +312,10 @@ export const translations = {
         cancel_btn: "ABBRECHEN",
         inventory_title: "🎒 Mein Inventar",
         loading_text: "Wird geladen...",
-        connection_timeout: "Zeitüberschreitung der Verbindung."
+        connection_timeout: "Zeitüberschreitung der Verbindung.",
+        no_active_lobbies: "Keine aktiven Lobbys. Sei der Erste! 🚀",
+        lobbies_failed: "Lobbys konnten nicht geladen werden.",
+        lobby_not_found: "Lobby nicht gefunden oder geschlossen."
     },
     es: {
         game_title: "Fútbol Arcade 2D",
@@ -403,7 +412,10 @@ export const translations = {
         cancel_btn: "CANCELAR",
         inventory_title: "🎒 Mi Inventario",
         loading_text: "Cargando...",
-        connection_timeout: "Tiempo de espera agotado."
+        connection_timeout: "Tiempo de espera agotado.",
+        no_active_lobbies: "No hay salas activas. ¡Sé el primero en crear una! 🚀",
+        lobbies_failed: "Error al cargar las salas.",
+        lobby_not_found: "Sala no encontrada o cerrada."
     },
     sv: {
         game_title: "2D Arkadfotboll",
@@ -506,7 +518,10 @@ export const translations = {
         cancel_btn: "AVBRYT",
         inventory_title: "🎒 Min Inventarie",
         loading_text: "Laddar...",
-        connection_timeout: "Anslutning misslyckades. Rummet stängt."
+        connection_timeout: "Anslutning misslyckades. Rummet stängt.",
+        no_active_lobbies: "Inga aktiva lobbys. Bli den första! 🚀",
+        lobbies_failed: "Det gick inte att ladda lobbys.",
+        lobby_not_found: "Lobbyn hittades inte eller är stängd."
     },
     ru: {
         game_title: "2D Аркадный Футбол",
@@ -609,7 +624,10 @@ export const translations = {
         cancel_btn: "ОТМЕНА",
         inventory_title: "🎒 Мой Инвентарь",
         loading_text: "Загрузка...",
-        connection_timeout: "Тайм-аут. Комната закрыта."
+        connection_timeout: "Тайм-аут. Комната закрыта.",
+        no_active_lobbies: "Нет активных лобби. Создай первым! 🚀",
+        lobbies_failed: "Не удалось загрузить лобби.",
+        lobby_not_found: "Лобби не найдено или закрыто."
     }
 };
 
