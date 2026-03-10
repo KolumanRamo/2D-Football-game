@@ -118,8 +118,26 @@ export const NetworkManager = {
         this.conn.on('close', () => {
             const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
             if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
-            alert("Bağlantı koptu!");
-            location.reload();
+
+            if (State.networkRole === 'client') {
+                alert("Bağlantı koptu! Lobi kurucusu çıkmış olabilir.");
+                location.reload();
+            } else if (State.networkRole === 'host') {
+                // Host handles client disconnect
+                console.log("Guest disconnected.");
+                this.conn = null;
+                State.conn = null;
+                // If we are in the lobby menu, remove the guest
+                if (State.lobby && State.lobby.players) {
+                    const guestId = Object.keys(State.lobby.players).find(id => id !== State.peerId);
+                    if (guestId) {
+                        delete State.lobby.players[guestId];
+                        this.sendLobbyState(State.lobby);
+                        // Trigger UI update
+                        window.dispatchEvent(new CustomEvent('lobbyStateUpdated'));
+                    }
+                }
+            }
         });
     },
 
