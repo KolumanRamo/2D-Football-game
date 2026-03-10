@@ -2240,7 +2240,7 @@ async function initLobbyBrowser() {
             const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
             if (globalLoadingOverlay) globalLoadingOverlay.classList.remove('hidden');
 
-            // Fill the peer join input and click join
+            // Fill the peer join input
             const lobbiesScreen = document.getElementById('lobbiesScreen');
             if (lobbiesScreen) lobbiesScreen.classList.add('hidden');
 
@@ -2249,9 +2249,17 @@ async function initLobbyBrowser() {
             startScreen.classList.add('hidden');
             const joinInput = document.getElementById('joinIdInput');
             if (joinInput) joinInput.value = lobby.hostPeerId;
-            // Auto click the join button
-            const joinBtn = document.getElementById('joinBtn');
-            if (joinBtn) joinBtn.click();
+
+            // Wait for Peer to be ready before joining
+            let tries = 0;
+            const waitPeer = setInterval(() => {
+                tries++;
+                if (State.peerId || tries > 40) {
+                    clearInterval(waitPeer);
+                    const joinBtn = document.getElementById('joinBtn');
+                    if (joinBtn) joinBtn.click();
+                }
+            }, 100);
         } catch (e) {
             const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
             if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
