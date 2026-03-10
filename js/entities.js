@@ -945,9 +945,15 @@ export class Ball extends Entity {
             'gold_ball': { color: '#f1c40f', glow: 'rgba(241,196,15,0.55)', name: 'Saf Altın' },
             'dark_ball': { color: '#8e44ad', glow: 'rgba(142,68,173,0.6)', name: 'Karanlık' },
         };
-        const activeSkin = (typeof State !== 'undefined' && BALL_SKINS[State.equippedBallSkin])
-            ? BALL_SKINS[State.equippedBallSkin]
-            : BALL_SKINS['classic_ball'];
+        let skinId = 'classic_ball';
+        if (typeof State !== 'undefined') {
+            if (State.isOnline && State.lobby && State.lobby.settings && State.lobby.settings.ballSkin) {
+                skinId = State.lobby.settings.ballSkin;
+            } else if (State.equippedBallSkin) {
+                skinId = State.equippedBallSkin;
+            }
+        }
+        const activeSkin = BALL_SKINS[skinId] || BALL_SKINS['classic_ball'];
 
         // ---- Motion blur trail ----
         const trailColor = activeSkin.color;
