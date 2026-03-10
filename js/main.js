@@ -1804,6 +1804,7 @@ function initAuthUI() {
                 State.equippedBallSkin = data.user.equippedBallSkin || 'classic_ball';
                 State.equippedJersey = data.user.equippedJersey || 'classic_jersey';
                 authScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
                 updateCoinDisplay();
             } else {
                 if (res.status === 503 || (data.error && data.error.includes('Veritabanı bağlantısı yok'))) {
@@ -1870,9 +1871,12 @@ async function loadMetagameData() {
             // Token expired or invalid
             localStorage.removeItem('arcadeFootball_token');
             authToken = null;
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
         }
     } catch (e) {
         console.error('Failed to load metagame data', e);
+        // On network failure with existing token, just proceed offline
     }
 }
 
