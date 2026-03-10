@@ -86,7 +86,7 @@ function initGame() {
         ballType = s.ballType || 'normal';
         State.isChaosMode = !!s.chaosMode;
         State.hotPotatoMode = !!s.bombMode;
-        State.suddenDeathMode = !!s.suddenDeath;
+        State.nightMode = !!s.nightMode;
         isVsAiMode = false; // No AI in online multiplayer
     }
 
@@ -118,7 +118,9 @@ function initGame() {
     State.announcerEnabled = announcerCheck ? announcerCheck.checked : false;
 
     const nightCheck = document.getElementById('nightModeToggle');
-    State.nightMode = nightCheck ? nightCheck.checked : false;
+    if (!State.isOnline) {
+        State.nightMode = nightCheck ? nightCheck.checked : false;
+    }
     State.grassBitmap = null; // Forces recreate with new colors
 
     if (State.announcerEnabled) {
@@ -1295,7 +1297,7 @@ function updateLobbyUI() {
         document.getElementById('lobbyBallType').disabled = false;
         if (document.getElementById('lobbyChaosMode')) document.getElementById('lobbyChaosMode').disabled = false;
         if (document.getElementById('lobbyBombMode')) document.getElementById('lobbyBombMode').disabled = false;
-        if (document.getElementById('lobbySuddenDeath')) document.getElementById('lobbySuddenDeath').disabled = false;
+        if (document.getElementById('lobbyNightMode')) document.getElementById('lobbyNightMode').disabled = false;
     } else {
         const startBtn = document.getElementById('lobbyStartBtn');
         if (startBtn) startBtn.style.display = 'none';
@@ -1310,7 +1312,7 @@ function updateLobbyUI() {
         document.getElementById('lobbyBallType').disabled = true;
         if (document.getElementById('lobbyChaosMode')) document.getElementById('lobbyChaosMode').disabled = true;
         if (document.getElementById('lobbyBombMode')) document.getElementById('lobbyBombMode').disabled = true;
-        if (document.getElementById('lobbySuddenDeath')) document.getElementById('lobbySuddenDeath').disabled = true;
+        if (document.getElementById('lobbyNightMode')) document.getElementById('lobbyNightMode').disabled = true;
 
         // Sync inputs
         if (State.lobby.settings) {
@@ -1320,7 +1322,7 @@ function updateLobbyUI() {
             document.getElementById('lobbyBallType').value = State.lobby.settings.ballType;
             if (document.getElementById('lobbyChaosMode')) document.getElementById('lobbyChaosMode').checked = !!State.lobby.settings.chaosMode;
             if (document.getElementById('lobbyBombMode')) document.getElementById('lobbyBombMode').checked = !!State.lobby.settings.bombMode;
-            if (document.getElementById('lobbySuddenDeath')) document.getElementById('lobbySuddenDeath').checked = !!State.lobby.settings.suddenDeath;
+            if (document.getElementById('lobbyNightMode')) document.getElementById('lobbyNightMode').checked = !!State.lobby.settings.nightMode;
         }
     }
 }
@@ -1581,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (State.networkRole !== 'host') return;
             State.isChaosMode = !!(document.getElementById('lobbyChaosMode') && document.getElementById('lobbyChaosMode').checked);
             State.hotPotatoMode = !!(document.getElementById('lobbyBombMode') && document.getElementById('lobbyBombMode').checked);
-            State.suddenDeathMode = !!(document.getElementById('lobbySuddenDeath') && document.getElementById('lobbySuddenDeath').checked);
+            State.nightMode = !!(document.getElementById('lobbyNightMode') && document.getElementById('lobbyNightMode').checked);
             NetworkManager.sendStartGame();
             lobbyMenu.classList.add('hidden');
             const myPlayerInfo = State.lobby.players[State.peerId];
@@ -1614,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lobby Settings Sync
-    const lobbyInputs = ['lobbyDuration', 'lobbyGoalLimit', 'lobbyWeather', 'lobbyBallType', 'lobbyChaosMode', 'lobbyBombMode', 'lobbySuddenDeath'];
+    const lobbyInputs = ['lobbyDuration', 'lobbyGoalLimit', 'lobbyWeather', 'lobbyBallType', 'lobbyChaosMode', 'lobbyBombMode', 'lobbyNightMode'];
     lobbyInputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -1626,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     State.lobby.settings.ballType = document.getElementById('lobbyBallType').value;
                     State.lobby.settings.chaosMode = document.getElementById('lobbyChaosMode') ? document.getElementById('lobbyChaosMode').checked : false;
                     State.lobby.settings.bombMode = document.getElementById('lobbyBombMode') ? document.getElementById('lobbyBombMode').checked : false;
-                    State.lobby.settings.suddenDeath = document.getElementById('lobbySuddenDeath') ? document.getElementById('lobbySuddenDeath').checked : false;
+                    State.lobby.settings.nightMode = document.getElementById('lobbyNightMode') ? document.getElementById('lobbyNightMode').checked : false;
                     NetworkManager.sendLobbyState(State.lobby);
                 }
             });
