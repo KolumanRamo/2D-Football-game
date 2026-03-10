@@ -15,16 +15,35 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '')));
 
-// Connect to MongoDB
+// Database connection state
 let isDbConnected = false;
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
+
+// Connect to MongoDB function for Serverless environments
+const connectDB = async () => {
+    if (isDbConnected && mongoose.connection.readyState === 1) {
+        return true;
+    }
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000 // fail fast if not connected
+        });
         console.log('MongoDB Connected');
         isDbConnected = true;
-    })
-    .catch(err => {
+        return true;
+    } catch (err) {
         console.error('MongoDB connection error, falling back to restricted mode:', err.message);
-    });
+        isDbConnected = false;
+        return false;
+    }
+};
+
+// Middleware to ensure DB is connected
+app.use(async (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        await connectDB();
+    }
+    next();
+});
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -307,6 +326,10 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
