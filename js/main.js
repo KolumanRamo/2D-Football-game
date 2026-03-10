@@ -690,8 +690,8 @@ function updateAndDrawFanEffects() {
         ctx.lineWidth = 4;
 
         const yOffset = -70 - (60 - msg.life) * 0.5; // Float up slightly
-        ctx.strokeText(msg.text, msg.x, msg.y + yOffset);
-        ctx.fillText(msg.text, msg.x, msg.y + yOffset);
+        ctx.strokeText(t(msg.text), msg.x, msg.y + yOffset);
+        ctx.fillText(t(msg.text), msg.x, msg.y + yOffset);
 
         ctx.font = '14px Fredoka';
         ctx.fillStyle = '#f1c40f';
@@ -1689,10 +1689,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keydown Interception for Quick Chat
     const CHAT_MESSAGES = {
-        '1': 'Harika Pas!',
-        '2': 'İyi Oyundu! (GG)',
-        '3': 'Kusura Bakma!',
-        '4': 'Şanslıydın!'
+        '1': 'qc_1',
+        '2': 'qc_2',
+        '3': 'qc_3',
+        '4': 'qc_4'
     };
 
     let lastChatTime = 0;

@@ -1,4 +1,5 @@
 import { State, Config } from './config.js';
+import { t } from './lang.js';
 
 export const NetworkManager = {
     peer: null,
@@ -110,7 +111,7 @@ export const NetworkManager = {
                 const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
                 if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
 
-                alert("Bağlantı zaman aşımına uğradı. Oda kapanmış olabilir.");
+                alert(t('connection_timeout'));
 
                 const lobbiesScreen = document.getElementById('lobbiesScreen');
                 if (lobbiesScreen) lobbiesScreen.classList.remove('hidden');

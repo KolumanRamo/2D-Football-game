@@ -1,53 +1,10 @@
-// js/lang.js
-export const translations = {
+const fs = require('fs');
+
+const path = 'js/lang.js';
+let content = fs.readFileSync(path, 'utf8');
+
+const newTranslations = {
     tr: {
-        game_title: "2D Arcade Futbol",
-        start_instruction: "Oynamak için Başla'ya bas!",
-        controls_hint: "Kırmızı: WASD | Mavi: OK TUŞLARI",
-        team_red: "Kırmızı Takım:",
-        team_blue: "Mavi Takım:",
-        duration_label: "Süre (Dk):",
-        goal_limit_label: "Hedef Skor:",
-        game_mode_label: "Oyun Modu:",
-        mode_2p: "2 Oyuncu",
-        mode_1p: "1 Oyuncu (vs Robo-Messi)",
-        ball_choice_label: "Top Seçimi:",
-        ball_normal: "Normal ⚽",
-        ball_bowling: "Bowling 🎳",
-        ball_beach: "Plaj 🏖️",
-        ball_pingpong: "Pinpon 🏓",
-        sound_effects: "Ses Efektleri 🔊",
-        chaos_mode: "🌀 KAOS MODU",
-        bomb_mode: "💣 BOMBA MODU",
-        sudden_death: "👑 ALTIN GOL",
-        start_btn: "MAÇA BAŞLA",
-        winner_text: "KAZANAN:",
-        draw_text: "BERABERE",
-        restart_btn: "TEKRAR OYNA",
-        pause_title: "DURAKLATILDI",
-        volume_label: "Ses Seviyesi",
-        resume_btn: "DEVAM ET",
-        main_menu_btn: "ANA MENÜ",
-        goal_text: "GOOOL!",
-        chaos_title: "🌀 KAOS! 🌀",
-        default_red: "Kırmızı",
-        default_blue: "Mavi",
-        draw: "BERABERE!",
-        won: " KAZANDI!",
-        chaos_fast_players: "⚡ HIZLANDIK! ⚡",
-        chaos_slow_players: "🐌 AĞIR ÇEKİM 🐌",
-        chaos_big_ball: "⚽ DEV TOP ⚽",
-        chaos_tiny_ball: "📍 MİNİK TOP 📍",
-        chaos_big_goals: "🥅 DEV KALELER 🥅",
-        chaos_tiny_goals: "🔒 MİNİK KALELER 🔒",
-        weather_label: "Hava Durumu:",
-        weather_sunny: "Güneşli ☀️",
-        weather_rainy: "Yağmurlu 🌧️",
-        weather_snowy: "Karlı ❄️",
-        weather_icy: "Buzlu 🧊",
-        'night_mode': '🌙 GECE MODU (PRO)',
-        'replay_toggle': '🎥 REPLAY SİSTEMİ',
-        replay_label: "● TEKRAR",
         quick_chat_title: "Hızlı Mesaj (1-4 Tuşları)",
         qc_1: "[1] Harika Pas!",
         qc_2: "[2] İyi Oyundu! (GG)",
@@ -103,56 +60,9 @@ export const translations = {
         cancel_btn: "İPTAL",
         inventory_title: "🎒 Envanterim",
         loading_text: "Yükleniyor...",
-        connection_timeout: "Bağlantı zaman aşımına uğradı."
+        connection_timeout: "Bağlantı zaman aşımına uğradı. Oda kapanmış olabilir."
     },
     en: {
-        game_title: "2D Arcade Soccer",
-        start_instruction: "Press Start to Play!",
-        controls_hint: "Red: WASD | Blue: ARROW KEYS",
-        team_red: "Red Team:",
-        team_blue: "Blue Team:",
-        duration_label: "Duration (Min):",
-        goal_limit_label: "Goal Limit:",
-        game_mode_label: "Game Mode:",
-        mode_2p: "2 Players",
-        mode_1p: "1 Player (vs Robo-Messi)",
-        ball_choice_label: "Ball Type:",
-        ball_normal: "Normal ⚽",
-        ball_bowling: "Bowling 🎳",
-        ball_beach: "Beach 🏖️",
-        ball_pingpong: "Ping Pong 🏓",
-        sound_effects: "Sound Effects 🔊",
-        chaos_mode: "🌀 CHAOS MODE",
-        bomb_mode: "💣 BOMB MODE",
-        sudden_death: "👑 GOLDEN GOAL",
-        weather_label: "Weather:",
-        weather_sunny: "Sunny ☀️",
-        weather_rainy: "Rainy 🌧️",
-        weather_snowy: "Snowy ❄️",
-        weather_icy: "Icy 🧊",
-        winner_text: "WINNER:",
-        draw_text: "DRAW",
-        restart_btn: "PLAY AGAIN",
-        pause_title: "PAUSED",
-        volume_label: "Volume",
-        resume_btn: "RESUME",
-        main_menu_btn: "MAIN MENU",
-        goal_text: "GOAL!",
-        chaos_title: "🌀 CHAOS! 🌀",
-        default_red: "Red",
-        default_blue: "Blue",
-        draw: "DRAW!",
-        won: " WON!",
-        chaos_fast_players: "⚡ SPEED UP! ⚡",
-        chaos_slow_players: "🐌 SLOW MOTION 🐌",
-        chaos_big_ball: "⚽ GIANT BALL ⚽",
-        chaos_tiny_ball: "📍 TINY BALL 📍",
-        chaos_big_goals: "🥅 GIANT GOALS 🥅",
-        chaos_tiny_goals: "🔒 TINY GOALS 🔒",
-        'night_mode': '🌙 NIGHT MODE (PRO)',
-        'replay_toggle': '🎥 REPLAY SYSTEM',
-        'start_btn': 'START MATCH',
-        replay_label: "● REPLAY",
         quick_chat_title: "Quick Chat (1-4 Keys)",
         qc_1: "[1] Great Pass!",
         qc_2: "[2] Good Game! (GG)",
@@ -208,49 +118,9 @@ export const translations = {
         cancel_btn: "CANCEL",
         inventory_title: "🎒 My Inventory",
         loading_text: "Loading...",
-        connection_timeout: "Connection timed out."
+        connection_timeout: "Connection timed out. Room might be closed."
     },
     de: {
-        game_title: "2D Arcade Fußball",
-        start_instruction: "Drücke Start zum Spielen!",
-        controls_hint: "Rot: WASD | Blau: PFEILTASTEN",
-        team_red: "Team Rot:",
-        team_blue: "Team Blau:",
-        duration_label: "Dauer (Min):",
-        goal_limit_label: "Torlimit:",
-        game_mode_label: "Spielmodus:",
-        mode_2p: "2 Spieler",
-        mode_1p: "1 Spieler (vs Robo-Messi)",
-        ball_choice_label: "Ballauswahl:",
-        ball_normal: "Normal ⚽",
-        ball_bowling: "Bowling 🎳",
-        ball_beach: "Strand 🏖️",
-        ball_pingpong: "Ping Pong 🏓",
-        sound_effects: "Soundeffekte 🔊",
-        chaos_mode: "🌀 CHAOS MODUS",
-        bomb_mode: "💣 BOMBEN-MODUS",
-        sudden_death: "👑 GOLDENES TOR",
-        weather_label: "Wetter:",
-        weather_sunny: "Sonnig ☀️",
-        weather_rainy: "Regnerisch 🌧️",
-        weather_snowy: "Schneereich ❄️",
-        weather_icy: "Eisig 🧊",
-        start_btn: "SPIEL STARTEN",
-        winner_text: "GEWINNER:",
-        draw_text: "UNENTSCHIEDEN",
-        restart_btn: "NEUSTART",
-        pause_title: "PAUSE",
-        volume_label: "Lautstärke",
-        resume_btn: "WEITER",
-        main_menu_btn: "HAUPTMENÜ",
-        goal_text: "TOR!",
-        chaos_title: "🌀 CHAOS! 🌀",
-        default_red: "Rot",
-        default_blue: "Blau",
-        draw: "UNENTSCHIEDEN!",
-        won: " HAT GEWONNEN!",
-        night_mode: "🌙 NACHTMODUS (PRO)",
-        replay_label: "● WIEDERHOLUNG",
         quick_chat_title: "Schnellchat (1-4 Tasten)",
         qc_1: "[1] Guter Pass!",
         qc_2: "[2] Gutes Spiel! (GG)",
@@ -306,48 +176,9 @@ export const translations = {
         cancel_btn: "ABBRECHEN",
         inventory_title: "🎒 Mein Inventar",
         loading_text: "Wird geladen...",
-        connection_timeout: "Zeitüberschreitung der Verbindung."
+        connection_timeout: "Zeitüberschreitung der Verbindung. Raum ist evtl. geschlossen."
     },
     es: {
-        game_title: "Fútbol Arcade 2D",
-        start_instruction: "¡Presiona Inicio para Jugar!",
-        controls_hint: "Rojo: WASD | Azul: FLECHAS",
-        team_red: "Equipo Rojo:",
-        team_blue: "Equipo Azul:",
-        duration_label: "Duración (Min):",
-        goal_limit_label: "Límite de Goles:",
-        game_mode_label: "Modo de Juego:",
-        mode_2p: "2 Jugadores",
-        mode_1p: "1 Jugador (vs Robo-Messi)",
-        ball_choice_label: "Tipo de Balón:",
-        ball_normal: "Normal ⚽",
-        ball_bowling: "Bolos 🎳",
-        ball_beach: "Playa 🏖️",
-        ball_pingpong: "Ping Pong 🏓",
-        sound_effects: "Efectos de Sonido 🔊",
-        announcer_voice: "Comentarista 🎙️",
-        chaos_mode: "🌀 MODO CAOS",
-        bomb_mode: "💣 MODO BOMBA",
-        sudden_death: "👑 GOL DE ORO",
-        weather_label: "Clima:",
-        weather_sunny: "Soleado ☀️",
-        weather_rainy: "Lluvioso 🌧️",
-        weather_snowy: "Nevado ❄️",
-        weather_icy: "Helado 🧊",
-        start_btn: "INICIAR PARTIDO",
-        winner_text: "GANADOR:",
-        draw_text: "EMPATE",
-        restart_btn: "JUGAR DE NUEVO",
-        pause_title: "PAUSADO",
-        volume_label: "Volumen",
-        resume_btn: "CONTINUAR",
-        main_menu_btn: "MENÚ PRINCIPAL",
-        goal_text: "¡GOL!",
-        chaos_title: "🌀 ¡CAOS! 🌀",
-        default_red: "Rojo",
-        default_blue: "Azul",
-        draw: "¡EMPATE!",
-        won: " GANÓ!",
         quick_chat_title: "Chat Rápido (Teclas 1-4)",
         qc_1: "[1] ¡Buen Pase!",
         qc_2: "[2] ¡Buen Juego! (GG)",
@@ -403,54 +234,9 @@ export const translations = {
         cancel_btn: "CANCELAR",
         inventory_title: "🎒 Mi Inventario",
         loading_text: "Cargando...",
-        connection_timeout: "Tiempo de espera agotado."
+        connection_timeout: "Tiempo de espera agotado. Sala cerrada."
     },
     sv: {
-        game_title: "2D Arkadfotboll",
-        start_instruction: "Tryck på Start för att spela!",
-        controls_hint: "Röd: WASD | Blå: PILTANGENTER",
-        team_red: "Röda Laget:",
-        team_blue: "Blåa Laget:",
-        duration_label: "Tid (min):",
-        goal_limit_label: "Målgräns:",
-        game_mode_label: "Spelläge:",
-        mode_2p: "2 Spelare",
-        mode_1p: "1 Spelare (mot Robo-Messi)",
-        ball_choice_label: "Välj Boll:",
-        ball_normal: "Normal ⚽",
-        ball_bowling: "Bowling 🎳",
-        ball_beach: "Strand 🏖️",
-        ball_pingpong: "Pingis 🏓",
-        sound_effects: "Ljudeffekter 🔊",
-        announcer_voice: "Kommentator 🎙️",
-        chaos_mode: "🌀 KAOSLÄGE",
-        bomb_mode: "💣 BOMBLÄGE",
-        sudden_death: "👑 GOLDEN GOAL",
-        weather_label: "Väder:",
-        weather_sunny: "Soligt ☀️",
-        weather_rainy: "Regnigt 🌧️",
-        weather_snowy: "Snöigt ❄️",
-        weather_icy: "Isigt 🧊",
-        start_btn: "STARTA MATCH",
-        winner_text: "VINNARE:",
-        draw_text: "OAVGJORT",
-        restart_btn: "SPELA IGEN",
-        pause_title: "PAUSAD",
-        volume_label: "Volym",
-        resume_btn: "FORTSÄTT",
-        main_menu_btn: "HUVUDMENY",
-        goal_text: "MÅÅÅL!",
-        chaos_title: "🌀 KAOS! 🌀",
-        default_red: "Röd",
-        default_blue: "Blå",
-        draw: "OAVGJORT!",
-        won: " VANN!",
-        chaos_fast_players: "⚡ SNABBARE! ⚡",
-        chaos_slow_players: "🐌 SLOW MOTION 🐌",
-        chaos_big_ball: "⚽ JÄTTEBOLL ⚽",
-        chaos_tiny_ball: "📍 MINIBOLL 📍",
-        chaos_big_goals: "🥅 JÄTTEMÅL 🥅",
-        chaos_tiny_goals: "🔒 MINIMÅL 🔒",
         quick_chat_title: "Snabbchatt (1-4)",
         qc_1: "[1] Bra Passning!",
         qc_2: "[2] Bra Match! (GG)",
@@ -506,54 +292,9 @@ export const translations = {
         cancel_btn: "AVBRYT",
         inventory_title: "🎒 Min Inventarie",
         loading_text: "Laddar...",
-        connection_timeout: "Anslutning misslyckades. Rummet stängt."
+        connection_timeout: "Anslutning misslyckades. Rummet kan vara stängt."
     },
     ru: {
-        game_title: "2D Аркадный Футбол",
-        start_instruction: "Нажми Старт, чтобы играть!",
-        controls_hint: "Красные: WASD | Синие: СТРЕЛКИ",
-        team_red: "Красная Команда:",
-        team_blue: "Синяя Команда:",
-        duration_label: "Время (мин):",
-        goal_limit_label: "Лимит Голов:",
-        game_mode_label: "Режим Игры:",
-        mode_2p: "2 Игрока",
-        mode_1p: "1 Игрок (против Робо-Месси)",
-        ball_choice_label: "Выбор Мяча:",
-        ball_normal: "Обычный ⚽",
-        ball_bowling: "Боулинг 🎳",
-        ball_beach: "Пляжный 🏖️",
-        ball_pingpong: "Пинг-понг 🏓",
-        sound_effects: "Звуковые Эффекты 🔊",
-        announcer_voice: "Комментатор 🎙️",
-        chaos_mode: "🌀 РЕЖИМ ХАОСА",
-        bomb_mode: "💣 РЕЖИМ БОМБЫ",
-        sudden_death: "👑 ЗОЛОТОЙ ГОЛ",
-        weather_label: "Погода:",
-        weather_sunny: "Солнечно ☀️",
-        weather_rainy: "Дождливо 🌧️",
-        weather_snowy: "Снежно ❄️",
-        weather_icy: "Лед 🧊",
-        start_btn: "НАЧАТЬ МАТЧ",
-        winner_text: "ПОБЕДИТЕЛЬ:",
-        draw_text: "НИЧЬЯ",
-        restart_btn: "ИГРАТЬ СНОВА",
-        pause_title: "ПАУЗА",
-        volume_label: "Громкость",
-        resume_btn: "ПРОДОЛЖИТЬ",
-        main_menu_btn: "ГЛАВНОЕ МЕНЮ",
-        goal_text: "ГОООЛ!",
-        chaos_title: "🌀 ХАОС! 🌀",
-        default_red: "Красные",
-        default_blue: "Синие",
-        draw: "НИЧЬЯ!",
-        won: " ПОБЕДИЛ!",
-        chaos_fast_players: "⚡ УСКОРЕНИЕ! ⚡",
-        chaos_slow_players: "🐌 ЗАМЕДЛЕНИЕ 🐌",
-        chaos_big_ball: "⚽ ГИГАНТСКИЙ МЯЧ ⚽",
-        chaos_tiny_ball: "📍 МИНИ МЯЧ 📍",
-        chaos_big_goals: "🥅 ГИГАНТСКИЕ ВОРОТА 🥅",
-        chaos_tiny_goals: "🔒 МИНИ ВОРОТА 🔒",
         quick_chat_title: "Быстрый Чат (Кнопки 1-4)",
         qc_1: "[1] Отличный пас!",
         qc_2: "[2] Хорошая игра! (GG)",
@@ -573,7 +314,7 @@ export const translations = {
         online_connecting: "Подключение...",
         host_btn: "СОЗДАТЬ КОМНАТУ (P1)",
         room_code_text: "Код Комнаты:",
-        copy_hint: "(Копировать)",
+        copy_hint: "(Нажмите для копирования)",
         join_input: "Введите Код (P2)",
         join_btn: "ПРИСОЕДИНИТЬСЯ",
         back_btn: "НАЗАД",
@@ -609,76 +350,32 @@ export const translations = {
         cancel_btn: "ОТМЕНА",
         inventory_title: "🎒 Мой Инвентарь",
         loading_text: "Загрузка...",
-        connection_timeout: "Тайм-аут. Комната закрыта."
+        connection_timeout: "Тайм-аут. Комната может быть закрыта."
     }
 };
 
-export let currentLang = localStorage.getItem('lang') || 'tr';
+const keys = Object.keys(newTranslations.tr);
+let updatedContent = content;
 
-export function t(key) {
-    if (translations[currentLang] && translations[currentLang][key]) {
-        return translations[currentLang][key];
-    }
-    return key;
-}
-
-export function updateLanguage(lang) {
-    if (!translations[lang]) return;
-    currentLang = lang;
-    localStorage.setItem('lang', lang);
-
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) {
-            el.innerText = translations[lang][key];
-        }
-    });
-
-    const weatherLabel = document.querySelector('label[data-i18n="weather_label"]');
-    if (weatherLabel) {
-        weatherLabel.innerText = translations[lang]['weather_label'];
-    }
-
-    const p1 = document.getElementById('p1NameInput');
-    const p2 = document.getElementById('p2NameInput');
-
-    const matchesDefault = (val, key) => {
-        return Object.values(translations).some(t => t[key] === val);
-    };
-
-    if (p1 && matchesDefault(p1.value, 'default_red')) {
-        p1.value = translations[lang]['default_red'];
-    }
-    if (p2 && matchesDefault(p2.value, 'default_blue')) {
-        p2.value = translations[lang]['default_blue'];
-    }
-
-    // Special placeholders and innerHTML that data-i18n might miss
-    const directJoinInput = document.getElementById('directJoinInput');
-    if (directJoinInput) directJoinInput.placeholder = t('code_input_placeholder');
-
-    const authUsername = document.getElementById('authUsername');
-    if (authUsername) authUsername.placeholder = t('auth_username');
-
-    const authPassword = document.getElementById('authPassword');
-    if (authPassword) authPassword.placeholder = t('auth_password');
-
-    const lobbyNameInput = document.getElementById('lobbyNameInput');
-    if (lobbyNameInput) lobbyNameInput.placeholder = t('lobby_name_placeholder');
-
-    const joinIdInput = document.getElementById('joinIdInput');
-    if (joinIdInput) joinIdInput.placeholder = t('join_input');
-
-    window.dispatchEvent(new Event('langChanged'));
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const langSelect = document.getElementById('languageSelect');
-    if (langSelect) {
-        langSelect.value = currentLang;
-        langSelect.addEventListener('change', (e) => {
-            updateLanguage(e.target.value);
+Object.keys(newTranslations).forEach(lang => {
+    // Find where the language object starts, e.g., 'tr: {'
+    const rx = new RegExp(`(${lang}:\\s*\\{[\\s\\S]*?\\n)(\\s*)([a-z_]+:\\s*[\\'\\"][\\s\\S]*?[\\'\\"])(?=\\n\\s*\\})`, 'i');
+    const match = content.match(rx);
+    if (match) {
+        const indent = match[2];
+        let insertStr = '';
+        keys.forEach(k => {
+            const val = newTranslations[lang][k].replace(/"/g, '\\"');
+            insertStr += `,\\n${indent}${k}: "${val}"`;
         });
+
+        // Find the language block and append
+        const bRx = new RegExp(`(${lang}:\\s*\\{[\\s\\S]*?)(\\n\\s*\\})`, 'i');
+        updatedContent = updatedContent.replace(bRx, `$1${insertStr}$2`);
+    } else {
+        console.error("Could not match language block for " + lang);
     }
-    updateLanguage(currentLang);
 });
+
+fs.writeFileSync(path, updatedContent);
+console.log('Script completed successfully.');
