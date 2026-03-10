@@ -59,6 +59,10 @@ export const NetworkManager = {
     },
 
     join(remoteId) {
+        if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+        }
+
         if (!remoteId) {
             alert("Lobi bulunamadı veya lobi sahibi odadan çıkmış. (Geçersiz Oda)");
             const onlineMenu = document.getElementById('onlineMenu');
@@ -79,10 +83,36 @@ export const NetworkManager = {
         this.conn = this.peer.connect(remoteId);
         State.conn = this.conn;
         this.setupConnection();
+
+        // Add 10-second timeout for joining
+        this.connectionTimeout = setTimeout(() => {
+            if (this.conn && !this.conn.open) {
+                console.error("Connection timeout!");
+                this.conn.close();
+                this.conn = null;
+                State.conn = null;
+                State.isOnline = false;
+                State.networkRole = null;
+
+                const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+                if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
+
+                alert("Bağlantı zaman aşımına uğradı. Oda kapanmış olabilir.");
+
+                const lobbiesScreen = document.getElementById('lobbiesScreen');
+                if (lobbiesScreen) lobbiesScreen.classList.remove('hidden');
+                const startScreen = document.getElementById('startScreen');
+                if (startScreen && lobbiesScreen && lobbiesScreen.classList.contains('hidden')) startScreen.classList.remove('hidden');
+            }
+        }, 10000);
     },
 
     setupConnection() {
         this.conn.on('open', () => {
+            if (this.connectionTimeout) {
+                clearTimeout(this.connectionTimeout);
+                this.connectionTimeout = null;
+            }
             console.log('Connection established!');
             if (State.networkRole === 'client') {
                 document.getElementById('onlineMenu').classList.add('hidden');
