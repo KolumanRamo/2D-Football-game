@@ -1410,6 +1410,10 @@ window.addEventListener('networkStartGame', () => {
 });
 
 window.addEventListener('networkReady', () => {
+    // Hide loading overlay if it was open
+    const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+    if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
+
     // Show Lobby
     if (lobbyMenu) lobbyMenu.classList.remove('hidden');
     startScreen.classList.add('hidden');
@@ -2232,12 +2236,16 @@ async function initLobbyBrowser() {
             // Ensure PeerJS is initialized before joining
             NetworkManager.init();
 
+            // Show loading overlay
+            const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+            if (globalLoadingOverlay) globalLoadingOverlay.classList.remove('hidden');
+
             // Fill the peer join input and click join
             const lobbiesScreen = document.getElementById('lobbiesScreen');
             if (lobbiesScreen) lobbiesScreen.classList.add('hidden');
 
             const onlineMenu = document.getElementById('onlineMenu');
-            onlineMenu.classList.remove('hidden');
+            if (onlineMenu) onlineMenu.classList.add('hidden');
             startScreen.classList.add('hidden');
             const joinInput = document.getElementById('joinIdInput');
             if (joinInput) joinInput.value = lobby.hostPeerId;
@@ -2245,6 +2253,8 @@ async function initLobbyBrowser() {
             const joinBtn = document.getElementById('joinBtn');
             if (joinBtn) joinBtn.click();
         } catch (e) {
+            const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+            if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
             alert('Lobiye katılınamadı.');
         }
     }

@@ -45,6 +45,8 @@ export const NetworkManager = {
             if (lobbyMenu) lobbyMenu.classList.add('hidden');
             const startScreen = document.getElementById('startScreen');
             if (startScreen) startScreen.classList.remove('hidden');
+            const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+            if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
         });
     },
 
@@ -114,6 +116,8 @@ export const NetworkManager = {
         });
 
         this.conn.on('close', () => {
+            const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+            if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
             alert("Bağlantı koptu!");
             location.reload();
         });

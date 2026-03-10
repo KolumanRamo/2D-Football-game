@@ -39,6 +39,27 @@
 <body>
 
     <div class="game-container">
+        <!-- Global Loading Overlay -->
+        <div id="globalLoadingOverlay" class="overlay hidden"
+            style="background: rgba(0,0,0,0.85); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div
+                style="width: 50px; height: 50px; border: 5px solid #f39c12; border-top: 5px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;">
+            </div>
+            <style>
+                @keyframes spin {
+                    0% {
+                        transform: rotate(0deg);
+                    }
+
+                    100% {
+                        transform: rotate(360deg);
+                    }
+                }
+            </style>
+            <h2 style="color: #f39c12; margin: 0; text-shadow: 0 0 10px #f39c12;">Bağlanıyor...</h2>
+            <p style="color: #ccc; margin-top: 5px; font-size: 0.9rem;">Lobiye giriş yapılıyor</p>
+        </div>
+
         <!-- Scoreboard -->
         <div id="scoreboard" class="scoreboard">
             <div class="team red-team">
