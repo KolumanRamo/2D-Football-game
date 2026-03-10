@@ -676,7 +676,7 @@ export class Player extends Entity {
         ctx.fill();
         // Jersey number
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.font = `bold ${this.radius * 0.55}px 'Fredoka One', sans-serif`;
+        ctx.font = `bold ${this.radius * 0.55}px 'Fredoka', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(numStr, 0, jerseyTop + jerseyH * 0.55);
@@ -856,7 +856,7 @@ export class Player extends Entity {
 
         // ---- Player Name ----
         ctx.save();
-        ctx.font = 'bold 16px "Fredoka One", sans-serif';
+        ctx.font = 'bold 16px "Fredoka", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';

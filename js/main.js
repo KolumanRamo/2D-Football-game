@@ -683,7 +683,7 @@ function updateAndDrawFanEffects() {
 
         ctx.save();
         ctx.globalAlpha = Math.min(1.0, msg.life / 20); // Fade out
-        ctx.font = 'bold 24px Fredoka One';
+        ctx.font = 'bold 24px Fredoka';
         ctx.textAlign = 'center';
         ctx.fillStyle = msg.color || '#ffffff';
         ctx.strokeStyle = '#000000';
@@ -693,7 +693,7 @@ function updateAndDrawFanEffects() {
         ctx.strokeText(msg.text, msg.x, msg.y + yOffset);
         ctx.fillText(msg.text, msg.x, msg.y + yOffset);
 
-        ctx.font = '14px Fredoka One';
+        ctx.font = '14px Fredoka';
         ctx.fillStyle = '#f1c40f';
         ctx.strokeText(msg.playerName, msg.x, msg.y + yOffset - 25);
         ctx.fillText(msg.playerName, msg.x, msg.y + yOffset - 25);
@@ -1109,7 +1109,7 @@ function gameLoop(timestamp) {
     if (State.hotPotatoMode) {
         const seconds = Math.ceil(State.bombTimer / 60);
         ctx.save();
-        ctx.font = 'bold 28px Fredoka One';
+        ctx.font = 'bold 28px Fredoka';
         ctx.textAlign = 'center';
         ctx.fillStyle = State.bombTimer < 180 ? '#ff0000' : '#ff6600';
         ctx.shadowColor = '#ff0000';
