@@ -53,9 +53,22 @@ export const NetworkManager = {
     host() {
         State.networkRole = 'host';
         State.isOnline = true;
-        // Instead of waiting, Host opens the lobby immediately so they can see their Room Menu
-        document.getElementById('onlineMenu').classList.add('hidden');
-        window.dispatchEvent(new CustomEvent('networkReady'));
+
+        // Show loading overlay while generating Peer ID
+        const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+        if (globalLoadingOverlay) globalLoadingOverlay.classList.remove('hidden');
+
+        // Wait for Peer ID before fully opening the lobby
+        let tries = 0;
+        const waitPeer = setInterval(() => {
+            tries++;
+            if (State.peerId || tries > 40) {
+                clearInterval(waitPeer);
+                if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
+                document.getElementById('onlineMenu').classList.add('hidden');
+                window.dispatchEvent(new CustomEvent('networkReady'));
+            }
+        }, 100);
     },
 
     join(remoteId) {
